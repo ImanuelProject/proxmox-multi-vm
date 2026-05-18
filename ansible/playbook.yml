@@ -1,0 +1,73 @@
+---
+- name: Configure all Proxmox VMs after Terraform provisioning
+  hosts: proxmox_vms
+  become: true
+
+  tasks:
+    - name: Wait until SSH is ready
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install basic packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - net-tools
+          - ca-certificates
+          - gnupg
+          - ufw
+          - nginx
+        state: present
+
+    - name: Enable and start Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Create simple Nginx index page
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+          <head>
+            <title>Auto Provisioned VM</title>
+          </head>
+          <body>
+            <h1>VM berhasil dibuat dengan Terraform</h1>
+            <p>Server ini dikonfigurasi otomatis menggunakan Ansible.</p>
+            <p>Hostname: {{ inventory_hostname }}</p>
+          </body>
+          </html>
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+    - name: Allow SSH traffic
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Allow HTTP traffic
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+        policy: deny
+
+    - name: Print success message
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} berhasil dikonfigurasi oleh Ansible."

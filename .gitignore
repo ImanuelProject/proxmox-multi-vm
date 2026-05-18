@@ -1,0 +1,27 @@
+# Terraform local state and overrides
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+
+# Generated Ansible inventory
+ansible/inventory.ini
+
+# VirtualBox runtime artifacts
+Proxmox-Lab/Logs/
+Proxmox-Lab/*.nvram
+Proxmox-Lab/*.vbox
+Proxmox-Lab/*.vbox-prev
+Proxmox-Lab/*.vdi
+
+# Large local assets
+*.iso
+*.img
+*.qcow2
+*.vdi
