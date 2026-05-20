@@ -1,5 +1,5 @@
 ---
-- name: Configure all Proxmox VMs after Terraform provisioning
+- name: Apply common baseline to all provisioned hosts
   hosts: proxmox_vms
   become: true
 
@@ -24,7 +24,31 @@
           - ca-certificates
           - gnupg
           - ufw
-          - nginx
+        state: present
+
+    - name: Allow SSH traffic
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+        policy: deny
+
+    - name: Print baseline success message
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} baseline berhasil diterapkan."
+
+- name: Configure web tier
+  hosts: role_web
+  become: true
+
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
         state: present
 
     - name: Enable and start Nginx
@@ -39,11 +63,12 @@
         content: |
           <html>
           <head>
-            <title>Auto Provisioned VM</title>
+            <title>Web Tier</title>
           </head>
           <body>
-            <h1>VM berhasil dibuat dengan Terraform</h1>
+            <h1>Web node berhasil dibuat dengan Terraform</h1>
             <p>Server ini dikonfigurasi otomatis menggunakan Ansible.</p>
+            <p>Role: web</p>
             <p>Hostname: {{ inventory_hostname }}</p>
           </body>
           </html>
@@ -51,23 +76,76 @@
         group: www-data
         mode: "0644"
 
-    - name: Allow SSH traffic
-      community.general.ufw:
-        rule: allow
-        port: "22"
-        proto: tcp
-
     - name: Allow HTTP traffic
       community.general.ufw:
         rule: allow
         port: "80"
         proto: tcp
 
-    - name: Enable UFW firewall
-      community.general.ufw:
-        state: enabled
-        policy: deny
+- name: Configure app tier
+  hosts: role_app
+  become: true
 
-    - name: Print success message
-      ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} berhasil dikonfigurasi oleh Ansible."
+  tasks:
+    - name: Install Python app runtime packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+        state: present
+
+    - name: Create app role marker
+      ansible.builtin.copy:
+        dest: /opt/app-role.txt
+        content: |
+          Role: app
+          Hostname: {{ inventory_hostname }}
+          Managed by: Ansible
+        mode: "0644"
+
+- name: Configure database tier
+  hosts: role_db
+  become: true
+
+  tasks:
+    - name: Install PostgreSQL
+      ansible.builtin.apt:
+        name: postgresql
+        state: present
+
+    - name: Enable and start PostgreSQL
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Create DB role marker
+      ansible.builtin.copy:
+        dest: /opt/db-role.txt
+        content: |
+          Role: db
+          Hostname: {{ inventory_hostname }}
+          Managed by: Ansible
+        mode: "0644"
+
+- name: Configure monitoring tier
+  hosts: role_monitoring
+  become: true
+
+  tasks:
+    - name: Install monitoring helper packages
+      ansible.builtin.apt:
+        name:
+          - sysstat
+          - btop
+        state: present
+
+    - name: Create monitoring role marker
+      ansible.builtin.copy:
+        dest: /opt/monitoring-role.txt
+        content: |
+          Role: monitoring
+          Hostname: {{ inventory_hostname }}
+          Managed by: Ansible
+        mode: "0644"

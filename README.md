@@ -92,6 +92,72 @@ Jika ingin destroy semua resource Terraform:
 .\scripts\destroy-lab.ps1
 ```
 
+## Tutorial Menjalankan Lab
+
+Urutan paling aman untuk menjalankan lab ini dari nol:
+
+1. Buka PowerShell di folder repo:
+
+```powershell
+cd "D:\Data Joni\terraform\proxmox-multi-vm"
+```
+
+2. Nyalakan VM host Proxmox:
+
+```powershell
+.\scripts\start-proxmox-lab.ps1
+```
+
+3. Set token Proxmox untuk sesi terminal aktif:
+
+```powershell
+.\scripts\set-proxmox-token.ps1
+```
+
+4. Cek prerequisite lokal:
+
+```powershell
+.\scripts\check-prereqs.ps1
+```
+
+5. Pastikan `terraform/terraform.tfvars` sudah sesuai kebutuhan.
+
+Untuk mode stabil di laptop ini:
+
+```hcl
+workload_type = "vm"
+vm_started    = false
+```
+
+6. Jalankan provisioning Terraform:
+
+```powershell
+.\scripts\apply-and-configure.ps1 -SkipAnsible
+```
+
+7. Lihat output Terraform dan inventory hasil generate:
+
+```powershell
+Get-Content .\ansible\inventory.ini
+```
+
+8. Jika ingin menghapus semua resource Terraform:
+
+```powershell
+.\scripts\destroy-lab.ps1
+```
+
+9. Jika selesai menggunakan lab, matikan VM host Proxmox:
+
+```powershell
+.\scripts\stop-proxmox-lab.ps1
+```
+
+Catatan:
+
+- untuk mode `vm` dengan `vm_started = false`, inventory bisa kosong dan output SSH akan menampilkan `not available while vm_started = false`
+- itu perilaku yang benar untuk mode `API-only`
+
 ## Mode Workload
 
 Repo ini sekarang mendukung dua mode workload:
@@ -110,6 +176,143 @@ Contoh mode VM:
 workload_type      = "vm"
 vm_started         = false
 cloud_image_file_id = "local:import/noble-server-cloudimg-amd64.qcow2"
+```
+
+## Skala Multi-VM
+
+Struktur `vms` sekarang mendukung:
+
+- default global lewat `vm_defaults`
+- `role` per instance
+- `tags` per instance
+- override CPU, memory, dan disk hanya untuk host tertentu
+
+Pola yang direkomendasikan:
+
+```hcl
+vm_defaults = {
+  role      = "app"
+  cpu_cores = 1
+  memory    = 1024
+  disk_size = 12
+}
+
+vms = {
+  web-01 = {
+    vm_id = 101
+    vm_ip = "192.168.10.101"
+    role  = "web"
+    tags  = ["frontend"]
+  }
+
+  app-01 = {
+    vm_id     = 102
+    vm_ip     = "192.168.10.102"
+    role      = "app"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
+  }
+
+  db-01 = {
+    vm_id     = 103
+    vm_ip     = "192.168.10.103"
+    role      = "db"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
+  }
+}
+```
+
+Hasilnya:
+
+- setiap entri tetap dibuat otomatis lewat `for_each`
+- host tanpa override akan memakai nilai dari `vm_defaults`
+- inventory Ansible akan punya grup per role seperti `role_web`, `role_app`, dan `role_db`
+
+Contoh skenario `5 VM`:
+
+```hcl
+vm_defaults = {
+  role      = "app"
+  cpu_cores = 1
+  memory    = 1024
+  disk_size = 12
+}
+
+vms = {
+  web-01 = {
+    vm_id = 101
+    vm_ip = "192.168.10.101"
+    role  = "web"
+    tags  = ["frontend"]
+  }
+
+  app-01 = {
+    vm_id = 102
+    vm_ip = "192.168.10.102"
+    role  = "app"
+    tags  = ["backend"]
+  }
+
+  db-01 = {
+    vm_id     = 103
+    vm_ip     = "192.168.10.103"
+    role      = "db"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
+  }
+
+  monitoring-01 = {
+    vm_id     = 104
+    vm_ip     = "192.168.10.104"
+    role      = "monitoring"
+    tags      = ["ops"]
+    disk_size = 20
+  }
+
+  app-02 = {
+    vm_id     = 105
+    vm_ip     = "192.168.10.105"
+    role      = "app"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
+  }
+}
+```
+
+Grup inventory Ansible yang akan terbentuk:
+
+- `role_web`
+- `role_app`
+- `role_db`
+- `role_monitoring`
+
+Contoh isi `ansible/inventory.ini` untuk topologi itu:
+
+```ini
+[proxmox_vms]
+web-01 ansible_host=192.168.10.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+app-01 ansible_host=192.168.10.102 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+db-01 ansible_host=192.168.10.103 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+monitoring-01 ansible_host=192.168.10.104 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+app-02 ansible_host=192.168.10.105 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[role_web]
+web-01
+
+[role_app]
+app-01
+app-02
+
+[role_db]
+db-01
+
+[role_monitoring]
+monitoring-01
 ```
 
 Contoh mode LXC:
@@ -172,7 +375,7 @@ Catatan:
 .\scripts\start-proxmox-lab.ps1 -Type headless
 .\scripts\stop-proxmox-lab.ps1
 .\scripts\stop-proxmox-lab.ps1 -Mode poweroff
-.\\scripts\\set-proxmox-token.ps1
+.\scripts\set-proxmox-token.ps1
 .\scripts\check-prereqs.ps1
 .\scripts\check-prereqs.ps1 -RequireAnsible
 .\scripts\apply-and-configure.ps1
@@ -245,6 +448,7 @@ Tujuannya agar repo hanya menyimpan source configuration, bukan secret dan artef
 ## Parameter Yang Penting
 
 - `workload_type`: pilih `vm` atau `lxc`
+- `vm_defaults`: default CPU, memory, disk, dan role untuk semua instance
 - `proxmox_tls_insecure`: pakai `true` jika endpoint Proxmox memakai certificate self-signed
 - `vm_started`: pakai `true` untuk flow `Terraform -> Ansible`
 - `vm_started`: pakai `false` jika Anda hanya ingin mendefinisikan VM tanpa langsung menyalakannya

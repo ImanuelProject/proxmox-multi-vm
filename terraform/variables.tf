@@ -36,6 +36,12 @@ variable "vm_datastore_id" {
   description = "Storage untuk disk VM"
 }
 
+variable "default_tags" {
+  type        = list(string)
+  description = "Tag default yang akan diterapkan ke semua workload"
+  default     = ["terraform", "ansible", "ubuntu"]
+}
+
 variable "network_bridge" {
   type        = string
   description = "Bridge network Proxmox"
@@ -128,14 +134,33 @@ variable "lxc_network_interface_name" {
   default     = "eth0"
 }
 
+variable "vm_defaults" {
+  type = object({
+    role      = optional(string)
+    cpu_cores = number
+    memory    = number
+    disk_size = number
+  })
+
+  description = "Nilai default untuk VM/LXC yang akan dipakai jika field per-instance tidak diisi"
+  default = {
+    role      = "app"
+    cpu_cores = 1
+    memory    = 1024
+    disk_size = 12
+  }
+}
+
 variable "vms" {
   type = map(object({
     vm_id     = number
     vm_ip     = string
-    cpu_cores = number
-    memory    = number
-    disk_size = number
+    role      = optional(string)
+    tags      = optional(list(string), [])
+    cpu_cores = optional(number)
+    memory    = optional(number)
+    disk_size = optional(number)
   }))
 
-  description = "Daftar VM yang akan dibuat"
+  description = "Daftar VM/LXC yang akan dibuat. vm_id dan vm_ip wajib, field lain bisa mengambil nilai dari vm_defaults."
 }

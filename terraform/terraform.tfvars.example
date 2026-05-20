@@ -5,6 +5,7 @@ workload_type = "vm"
 proxmox_node     = "pve-lab"
 vm_datastore_id  = "local-lvm"
 network_bridge   = "vmbr0"
+default_tags     = ["terraform", "ansible", "ubuntu"]
 
 vm_gateway = "192.168.10.1"
 vm_cidr    = 24
@@ -20,20 +21,51 @@ cloud_image_file_id   = "local:import/noble-server-cloudimg-amd64.qcow2"
 # Ganti nilai ini jika ingin memakai LXC, lalu set workload_type = "lxc"
 # container_template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
 
+vm_defaults = {
+  role      = "app"
+  cpu_cores = 1
+  memory    = 1024
+  disk_size = 12
+}
+
 vms = {
+  web-01 = {
+    vm_id = 101
+    vm_ip = "192.168.10.101"
+    role  = "web"
+    tags  = ["frontend"]
+  }
+
   app-01 = {
-    vm_id     = 101
-    vm_ip     = "192.168.10.101"
-    cpu_cores = 1
-    memory    = 1024
-    disk_size = 12
+    vm_id     = 102
+    vm_ip     = "192.168.10.102"
+    role      = "app"
+    tags      = ["backend"]
+  }
+
+  db-01 = {
+    vm_id     = 103
+    vm_ip     = "192.168.10.103"
+    role      = "db"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
+  }
+
+  monitoring-01 = {
+    vm_id     = 104
+    vm_ip     = "192.168.10.104"
+    role      = "monitoring"
+    tags      = ["ops"]
+    disk_size = 20
   }
 
   app-02 = {
-    vm_id     = 102
-    vm_ip     = "192.168.10.102"
-    cpu_cores = 1
-    memory    = 1024
-    disk_size = 12
+    vm_id     = 105
+    vm_ip     = "192.168.10.105"
+    role      = "app"
+    tags      = ["backend"]
+    cpu_cores = 2
+    memory    = 2048
   }
 }

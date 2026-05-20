@@ -1,3 +1,19 @@
 [proxmox_vms]
-app-01 ansible_host=192.168.10.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
-app-02 ansible_host=192.168.10.102 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+web-01 ansible_host=192.168.10.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+app-01 ansible_host=192.168.10.102 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+db-01 ansible_host=192.168.10.103 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+monitoring-01 ansible_host=192.168.10.104 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+app-02 ansible_host=192.168.10.105 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[role_web]
+web-01
+
+[role_app]
+app-01
+app-02
+
+[role_db]
+db-01
+
+[role_monitoring]
+monitoring-01

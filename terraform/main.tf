@@ -26,15 +26,32 @@ locals {
   effective_ansible_user = var.ansible_user != null ? var.ansible_user : (
     local.workload_is_lxc ? "root" : var.vm_user
   )
-  ansible_targets = var.vm_started ? var.vms : {}
+  normalized_vms = {
+    for name, vm in var.vms : name => {
+      vm_id     = vm.vm_id
+      vm_ip     = vm.vm_ip
+      role      = coalesce(try(vm.role, null), var.vm_defaults.role)
+      cpu_cores = coalesce(try(vm.cpu_cores, null), var.vm_defaults.cpu_cores)
+      memory    = coalesce(try(vm.memory, null), var.vm_defaults.memory)
+      disk_size = coalesce(try(vm.disk_size, null), var.vm_defaults.disk_size)
+      tags = distinct(concat(
+        var.default_tags,
+        try(vm.tags, []),
+        compact([coalesce(try(vm.role, null), var.vm_defaults.role)]),
+        local.workload_is_lxc ? ["lxc"] : []
+      ))
+    }
+  }
+  ansible_targets = var.vm_started ? local.normalized_vms : {}
+  ansible_roles   = distinct([for _, vm in local.ansible_targets : vm.role if vm.role != null && trimspace(vm.role) != ""])
 }
 
 resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
-  for_each = local.workload_is_vm ? var.vms : {}
+  for_each = local.workload_is_vm ? local.normalized_vms : {}
 
   name        = each.key
-  description = "VM managed by Terraform and configured by Ansible"
-  tags        = ["terraform", "ansible", "ubuntu"]
+  description = each.value.role != null ? "VM managed by Terraform and configured by Ansible (${each.value.role})" : "VM managed by Terraform and configured by Ansible"
+  tags        = each.value.tags
 
   node_name = var.proxmox_node
   vm_id     = each.value.vm_id
@@ -104,10 +121,10 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
 }
 
 resource "proxmox_virtual_environment_container" "ubuntu_lxc" {
-  for_each = local.workload_is_lxc ? var.vms : {}
+  for_each = local.workload_is_lxc ? local.normalized_vms : {}
 
-  description = "LXC managed by Terraform and configured by Ansible"
-  tags        = ["terraform", "ansible", "ubuntu", "lxc"]
+  description = each.value.role != null ? "LXC managed by Terraform and configured by Ansible (${each.value.role})" : "LXC managed by Terraform and configured by Ansible"
+  tags        = each.value.tags
 
   node_name    = var.proxmox_node
   vm_id        = each.value.vm_id
@@ -174,6 +191,7 @@ resource "local_file" "ansible_inventory" {
 
   content = templatefile("${path.module}/inventory.tpl", {
     vms     = local.ansible_targets
+    roles   = local.ansible_roles
     vm_user = local.effective_ansible_user
     ssh_key = var.ssh_private_key_path
   })
