@@ -4,14 +4,19 @@
 *.tfstate.*
 *.tfvars
 *.auto.tfvars
+terraform/environments/*.tfvars
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
 crash.log
+.terraformrc
+terraform.rc
 
 # Generated Ansible inventory
 ansible/inventory.ini
+ansible/*.retry
+.ansible/
 
 # VirtualBox runtime artifacts
 Proxmox-Lab/Logs/
@@ -25,3 +30,23 @@ Proxmox-Lab/*.vdi
 *.img
 *.qcow2
 *.vdi
+
+# Local observability runtime data
+observability/data/
+observability/docker-compose.yml
+
+# Local secrets and environment files
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Local docs and interview notes
+docs/
+
+# OS/editor noise
+Thumbs.db
+.DS_Store

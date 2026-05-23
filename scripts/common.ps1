@@ -100,3 +100,42 @@ function Quote-BashLiteral {
 
     return "'" + $Value.Replace("'", "'\''") + "'"
 }
+
+function Resolve-TerraformVarFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [string]$EnvironmentName,
+
+        [string]$VarFile,
+
+        [switch]$AllowMissing
+    )
+
+    if ($EnvironmentName -and $VarFile) {
+        throw "Gunakan salah satu: -EnvironmentName atau -VarFile, jangan keduanya."
+    }
+
+    if ($VarFile) {
+        $resolvedPath = if ([System.IO.Path]::IsPathRooted($VarFile)) {
+            $VarFile
+        }
+        else {
+            Join-Path $RepoRoot $VarFile
+        }
+    }
+    elseif ($EnvironmentName) {
+        $resolvedPath = Join-Path $RepoRoot "terraform\environments\$EnvironmentName.tfvars"
+    }
+    else {
+        $resolvedPath = Join-Path $RepoRoot "terraform\terraform.tfvars"
+    }
+
+    $fullPath = [System.IO.Path]::GetFullPath($resolvedPath)
+    if (-not $AllowMissing) {
+        Assert-PathExists -Path $fullPath -Description "File Terraform variables"
+    }
+
+    return $fullPath
+}

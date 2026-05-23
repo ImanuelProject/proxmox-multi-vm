@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
     [switch]$RequireAnsible,
-    [switch]$RequireInventory
+    [switch]$RequireInventory,
+    [string]$EnvironmentName,
+    [string]$VarFile
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,15 +12,15 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $terraformDir = Join-Path $repoRoot "terraform"
 $ansibleDir = Join-Path $repoRoot "ansible"
-$tfvarsPath = Join-Path $terraformDir "terraform.tfvars"
+$tfvarsPath = Resolve-TerraformVarFile -RepoRoot $repoRoot -EnvironmentName $EnvironmentName -VarFile $VarFile
 $playbookPath = Join-Path $ansibleDir "playbook.yml"
 $inventoryPath = Join-Path $ansibleDir "inventory.ini"
 
 Write-Host "==> Validating local prerequisites"
 Assert-PathExists -Path $terraformDir -Description "Folder terraform"
 Assert-PathExists -Path $ansibleDir -Description "Folder ansible"
-Assert-PathExists -Path $tfvarsPath -Description "File terraform.tfvars"
 Assert-PathExists -Path $playbookPath -Description "File playbook Ansible"
+Write-Host "==> Terraform var-file: $tfvarsPath"
 
 if (-not $env:TF_VAR_proxmox_api_token) {
     throw "Environment variable 'TF_VAR_proxmox_api_token' belum diset. Contoh: `$env:TF_VAR_proxmox_api_token=`"root@pam!terraform=your-token`""

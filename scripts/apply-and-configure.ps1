@@ -3,7 +3,9 @@ param(
     [switch]$SkipTerraformInit,
     [switch]$SkipAnsible,
     [switch]$AutoApprove,
-    [int]$ApplyParallelism = 0
+    [int]$ApplyParallelism = 0,
+    [string]$EnvironmentName,
+    [string]$VarFile
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,16 +16,16 @@ $terraformDir = Join-Path $repoRoot "terraform"
 $ansibleDir = Join-Path $repoRoot "ansible"
 $inventoryPath = Join-Path $ansibleDir "inventory.ini"
 $playbookPath = Join-Path $ansibleDir "playbook.yml"
-$tfvarsPath = Join-Path $terraformDir "terraform.tfvars"
+$tfvarsPath = Resolve-TerraformVarFile -RepoRoot $repoRoot -EnvironmentName $EnvironmentName -VarFile $VarFile
 $terraformExe = Assert-ResolvedCommand -CommandName "terraform" -CandidatePaths @(
     "D:\aplikasi\terraform\terraform.exe"
 ) -InstallHint "Install Terraform atau letakkan binary di lokasi yang didukung script."
 
 if ($SkipAnsible) {
-    & (Join-Path $PSScriptRoot "check-prereqs.ps1")
+    & (Join-Path $PSScriptRoot "check-prereqs.ps1") -EnvironmentName $EnvironmentName -VarFile $VarFile
 }
 else {
-    & (Join-Path $PSScriptRoot "check-prereqs.ps1") -RequireAnsible
+    & (Join-Path $PSScriptRoot "check-prereqs.ps1") -RequireAnsible -EnvironmentName $EnvironmentName -VarFile $VarFile
 }
 if (-not $?) {
     throw "Prerequisite check gagal."
@@ -52,6 +54,10 @@ try {
         $applyArgs += "-parallelism=$resolvedParallelism"
     }
 
+    if ($tfvarsPath -ne (Join-Path $terraformDir "terraform.tfvars")) {
+        $applyArgs += "-var-file=$tfvarsPath"
+    }
+
     if ($AutoApprove) {
         $applyArgs += "-auto-approve"
     }
@@ -67,7 +73,7 @@ finally {
 }
 
 Write-Host "==> Checking generated Ansible inventory"
-& (Join-Path $PSScriptRoot "check-prereqs.ps1") -RequireInventory
+& (Join-Path $PSScriptRoot "check-prereqs.ps1") -RequireInventory -EnvironmentName $EnvironmentName -VarFile $VarFile
 if (-not $?) {
     throw "Inventory check gagal."
 }

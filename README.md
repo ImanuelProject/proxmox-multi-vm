@@ -485,3 +485,65 @@ Lalu jalankan flow normal:
 .\scripts\check-prereqs.ps1
 .\scripts\apply-and-configure.ps1 -SkipAnsible
 ```
+
+## CI-CD Dan Environment-Aware
+
+Repo ini sekarang punya workflow validasi GitHub Actions di:
+
+- `.github/workflows/iac-validate.yml`
+
+Workflow itu menjalankan:
+
+- `terraform fmt -check`
+- `terraform init -backend=false`
+- `terraform validate`
+- `ansible-lint`
+- `yamllint`
+
+Repo ini juga mendukung struktur environment-aware melalui:
+
+- `terraform/environments/dev.tfvars.example`
+- `terraform/environments/staging.tfvars.example`
+- `terraform/environments/prod.tfvars.example`
+
+Untuk menjalankan environment tertentu, salin dulu file example ke file lokal lalu gunakan:
+
+```powershell
+Copy-Item terraform\environments\dev.tfvars.example terraform\environments\dev.tfvars
+.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev
+```
+
+Lihat juga:
+
+- `docs/ENVIRONMENTS.md`
+
+## Observability Dasar
+
+Repo ini sekarang menyediakan starter observability di folder `observability/`.
+
+Isinya:
+
+- Prometheus config
+- Loki config
+- Grafana datasource provisioning
+- `docker-compose.yml.example`
+- alert rules dasar
+
+Untuk host yang benar-benar menyala, playbook Ansible juga sekarang menambahkan baseline berikut:
+
+- `prometheus-node-exporter`
+- `rsyslog`
+- `prometheus` khusus role `monitoring`
+
+Lihat juga:
+
+- `observability/README.md`
+
+## Secret Handling Dan Operational Docs
+
+Dokumen tambahan yang bisa dipakai untuk belajar dan interview:
+
+- `docs/AUTOMATION-SETUP.md`
+- `docs/PLATFORM-ENGINEER-ROADMAP.md`
+- `docs/ENVIRONMENTS.md`
+- `docs/SECRETS-AND-OPERATIONS.md`

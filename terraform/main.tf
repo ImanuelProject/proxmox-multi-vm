@@ -21,8 +21,8 @@ provider "proxmox" {
 }
 
 locals {
-  workload_is_vm      = var.workload_type == "vm"
-  workload_is_lxc     = var.workload_type == "lxc"
+  workload_is_vm  = var.workload_type == "vm"
+  workload_is_lxc = var.workload_type == "lxc"
   effective_ansible_user = var.ansible_user != null ? var.ansible_user : (
     local.workload_is_lxc ? "root" : var.vm_user
   )

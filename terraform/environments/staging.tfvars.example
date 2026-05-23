@@ -1,0 +1,52 @@
+proxmox_endpoint     = "https://192.168.56.20:8006/"
+proxmox_tls_insecure = true
+
+workload_type = "vm"
+vm_started    = false
+
+proxmox_node    = "pve-lab"
+vm_datastore_id = "local-lvm"
+network_bridge  = "vmbr0"
+default_tags    = ["terraform", "ansible", "ubuntu", "staging"]
+
+vm_gateway = "192.168.20.1"
+vm_cidr    = 24
+
+dns_servers = ["8.8.8.8", "1.1.1.1"]
+
+vm_user              = "ubuntu"
+ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
+ssh_private_key_path = "~/.ssh/id_ed25519"
+
+cloud_image_file_id = "local:import/noble-server-cloudimg-amd64.qcow2"
+
+vm_defaults = {
+  role      = "app"
+  cpu_cores = 2
+  memory    = 2048
+  disk_size = 20
+}
+
+vms = {
+  web-01 = {
+    vm_id = 201
+    vm_ip = "192.168.20.101"
+    role  = "web"
+    tags  = ["frontend"]
+  }
+
+  app-01 = {
+    vm_id = 202
+    vm_ip = "192.168.20.102"
+    role  = "app"
+    tags  = ["backend"]
+  }
+
+  db-01 = {
+    vm_id  = 203
+    vm_ip  = "192.168.20.103"
+    role   = "db"
+    tags   = ["backend"]
+    memory = 4096
+  }
+}

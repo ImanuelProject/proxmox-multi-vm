@@ -1,0 +1,62 @@
+---
+name: Validate IaC
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform-and-ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Terraform fmt check
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+
+      - name: Prepare CI tfvars
+        working-directory: terraform
+        run: cp terraform.tfvars.example terraform.tfvars
+
+      - name: Terraform init
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_api_token: root@pam!ci=dummy-token
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_api_token: root@pam!ci=dummy-token
+        run: terraform validate
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible-lint and yamllint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-lint yamllint
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Lint Ansible playbook
+        run: |
+          ANSIBLE_CONFIG=ansible/ansible.cfg \
+          ansible-lint ansible/playbook.yml
+
+      - name: Lint YAML files
+        run: yamllint ansible .github/workflows

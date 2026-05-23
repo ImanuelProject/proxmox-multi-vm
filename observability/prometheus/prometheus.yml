@@ -1,0 +1,21 @@
+---
+global:
+  scrape_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: proxmox-lab-monitoring
+    static_configs:
+      - targets:
+          - monitoring-01:9100
+          - web-01:9100
+          - app-01:9100
+          - app-02:9100
+          - db-01:9100

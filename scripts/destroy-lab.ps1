@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
     [switch]$SkipTerraformInit,
-    [switch]$AutoApprove
+    [switch]$AutoApprove,
+    [string]$EnvironmentName,
+    [string]$VarFile
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,11 +11,12 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $terraformDir = Join-Path $repoRoot "terraform"
+$tfvarsPath = Resolve-TerraformVarFile -RepoRoot $repoRoot -EnvironmentName $EnvironmentName -VarFile $VarFile
 $terraformExe = Assert-ResolvedCommand -CommandName "terraform" -CandidatePaths @(
     "D:\aplikasi\terraform\terraform.exe"
 ) -InstallHint "Install Terraform atau letakkan binary di lokasi yang didukung script."
 
-& (Join-Path $PSScriptRoot "check-prereqs.ps1")
+& (Join-Path $PSScriptRoot "check-prereqs.ps1") -EnvironmentName $EnvironmentName -VarFile $VarFile
 if (-not $?) {
     throw "Prerequisite check gagal."
 }
@@ -29,6 +32,9 @@ try {
     }
 
     $destroyArgs = @("destroy")
+    if ($tfvarsPath -ne (Join-Path $terraformDir "terraform.tfvars")) {
+        $destroyArgs += "-var-file=$tfvarsPath"
+    }
     if ($AutoApprove) {
         $destroyArgs += "-auto-approve"
     }

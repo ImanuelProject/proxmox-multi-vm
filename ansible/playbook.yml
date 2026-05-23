@@ -24,7 +24,19 @@
           - ca-certificates
           - gnupg
           - ufw
+          - rsyslog
         state: present
+
+    - name: Install node exporter
+      ansible.builtin.apt:
+        name: prometheus-node-exporter
+        state: present
+
+    - name: Enable and start node exporter
+      ansible.builtin.service:
+        name: prometheus-node-exporter
+        state: started
+        enabled: true
 
     - name: Allow SSH traffic
       community.general.ufw:
@@ -137,9 +149,22 @@
     - name: Install monitoring helper packages
       ansible.builtin.apt:
         name:
+          - prometheus
           - sysstat
           - btop
         state: present
+
+    - name: Enable and start Prometheus
+      ansible.builtin.service:
+        name: prometheus
+        state: started
+        enabled: true
+
+    - name: Create observability workspace directory
+      ansible.builtin.file:
+        path: /opt/platform-observability
+        state: directory
+        mode: "0755"
 
     - name: Create monitoring role marker
       ansible.builtin.copy:
@@ -148,4 +173,17 @@
           Role: monitoring
           Hostname: {{ inventory_hostname }}
           Managed by: Ansible
+        mode: "0644"
+
+    - name: Create basic observability note
+      ansible.builtin.copy:
+        dest: /opt/platform-observability/README.txt
+        content: |
+          This node is prepared as the monitoring tier.
+          Installed services:
+          - prometheus
+          - prometheus-node-exporter
+          - rsyslog
+          Extend this node with Grafana and Loki
+          or connect it to an external observability stack.
         mode: "0644"
