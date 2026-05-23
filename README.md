@@ -26,7 +26,9 @@ Pilih aksi yang ingin Anda lakukan:
 - `terraform/main.tf`: provisioning provider Proxmox, cloud image, VM, dan inventory Ansible
 - `terraform/variables.tf`: definisi variabel Terraform
 - `terraform/terraform.tfvars.example`: contoh konfigurasi lokal
+- `terraform/environments/*.tfvars.example`: contoh konfigurasi per environment
 - `ansible/playbook.yml`: bootstrap dasar VM Ubuntu
+- `ansible/requirements.yml`: daftar collection Ansible untuk lint dan bootstrap
 - `scripts/apply-and-configure.ps1`: flow `terraform -> inventory -> ansible`
 - `scripts/destroy-lab.ps1`: flow `terraform destroy`
 - `scripts/start-proxmox-lab.ps1`: start VM host Proxmox di VirtualBox
@@ -36,6 +38,8 @@ Pilih aksi yang ingin Anda lakukan:
 - `scripts/configure-hostonly-management.ps1`: pasang NIC host-only untuk management Proxmox
 - `PROXMOX-HOSTONLY-NETWORK.md`: panduan memindahkan IP management Proxmox ke host-only network
 - `RUNBOOK.md`: panduan operasional harian
+- `.github/workflows/iac-validate.yml`: validasi Terraform dan Ansible di CI
+- `observability/`: starter stack Prometheus, Loki, dan Grafana
 
 ## Mode Yang Direkomendasikan Di Laptop Ini
 
@@ -362,9 +366,11 @@ Catatan:
 | Cek dependency dasar | `.\scripts\check-prereqs.ps1` |
 | Cek dependency termasuk Ansible | `.\scripts\check-prereqs.ps1 -RequireAnsible` |
 | Provision Terraform saja | `.\scripts\apply-and-configure.ps1 -SkipAnsible` |
+| Provision environment tertentu | `.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev` |
 | Provision + bootstrap | `.\scripts\apply-and-configure.ps1` |
 | Provision tanpa prompt approval | `.\scripts\apply-and-configure.ps1 -AutoApprove` |
 | Destroy resource | `.\scripts\destroy-lab.ps1` |
+| Destroy environment tertentu | `.\scripts\destroy-lab.ps1 -EnvironmentName dev` |
 | Destroy tanpa prompt approval | `.\scripts\destroy-lab.ps1 -AutoApprove` |
 
 <details>
@@ -513,10 +519,6 @@ Copy-Item terraform\environments\dev.tfvars.example terraform\environments\dev.t
 .\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev
 ```
 
-Lihat juga:
-
-- `docs/ENVIRONMENTS.md`
-
 ## Observability Dasar
 
 Repo ini sekarang menyediakan starter observability di folder `observability/`.
@@ -535,15 +537,14 @@ Untuk host yang benar-benar menyala, playbook Ansible juga sekarang menambahkan 
 - `rsyslog`
 - `prometheus` khusus role `monitoring`
 
-Lihat juga:
+Cara cepat menjalankan stack observability lokal:
 
-- `observability/README.md`
+```powershell
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" compose -f ".\observability\docker-compose.yml.example" up -d
+```
 
-## Secret Handling Dan Operational Docs
+Service yang aktif:
 
-Dokumen tambahan yang bisa dipakai untuk belajar dan interview:
-
-- `docs/AUTOMATION-SETUP.md`
-- `docs/PLATFORM-ENGINEER-ROADMAP.md`
-- `docs/ENVIRONMENTS.md`
-- `docs/SECRETS-AND-OPERATIONS.md`
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Loki: `http://localhost:3100`
