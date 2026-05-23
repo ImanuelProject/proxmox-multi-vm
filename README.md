@@ -23,7 +23,8 @@ Pilih aksi yang ingin Anda lakukan:
 
 ## Struktur
 
-- `terraform/main.tf`: provisioning provider Proxmox, cloud image, VM, dan inventory Ansible
+- `terraform/main.tf`: root Terraform config, provider, module call, dan inventory Ansible
+- `terraform/modules/proxmox-workloads/`: module reusable untuk VM/LXC Proxmox
 - `terraform/variables.tf`: definisi variabel Terraform
 - `terraform/terraform.tfvars.example`: contoh konfigurasi lokal
 - `terraform/environments/*.tfvars.example`: contoh konfigurasi per environment
@@ -37,9 +38,10 @@ Pilih aksi yang ingin Anda lakukan:
 - `scripts/set-proxmox-token.ps1`: set token Proxmox untuk sesi PowerShell aktif
 - `scripts/configure-hostonly-management.ps1`: pasang NIC host-only untuk management Proxmox
 - `PROXMOX-HOSTONLY-NETWORK.md`: panduan memindahkan IP management Proxmox ke host-only network
+- `ENVIRONMENT-ARCHITECTURE.md`: arsitektur logical per environment
 - `RUNBOOK.md`: panduan operasional harian
-- `.github/workflows/iac-validate.yml`: validasi Terraform dan Ansible di CI
-- `observability/`: starter stack Prometheus, Loki, dan Grafana
+- `.github/workflows/iac-validate.yml`: validasi Terraform, lint Ansible, dan artifact `terraform plan`
+- `observability/`: starter stack Prometheus, Loki, Grafana, dan Alertmanager
 
 ## Mode Yang Direkomendasikan Di Laptop Ini
 
@@ -410,6 +412,19 @@ Catatan runtime:
 - Ansible dijalankan lewat `WSL2` menggunakan `wsl.exe`
 - token Proxmox dibaca dari environment variable `TF_VAR_proxmox_api_token`
 
+## Terraform Module Layout
+
+Terraform sekarang dipisah menjadi root config dan module reusable:
+
+- root `terraform/main.tf` menangani provider, wiring variable, dan inventory
+- module `terraform/modules/proxmox-workloads/` menangani resource VM/LXC dan normalisasi workload
+
+Tujuannya:
+
+- root config tetap tipis
+- logika provisioning lebih mudah dipakai ulang
+- struktur lebih siap untuk berkembang ke environment atau stack tambahan
+
 ## Jika Ingin Mencoba Nested KVM
 
 Nested KVM baru mungkin berjalan jika hypervisor Windows tidak mengambil alih virtualisasi hardware.
@@ -503,14 +518,22 @@ Workflow itu menjalankan:
 - `terraform fmt -check`
 - `terraform init -backend=false`
 - `terraform validate`
+- `terraform plan -refresh=false -lock=false`
 - `ansible-lint`
 - `yamllint`
+
+Artifact yang dihasilkan:
+
+- `terraform-plan-report`
+- berisi file binary `tfplan`
+- berisi report teks `tfplan.txt`
 
 Repo ini juga mendukung struktur environment-aware melalui:
 
 - `terraform/environments/dev.tfvars.example`
 - `terraform/environments/staging.tfvars.example`
 - `terraform/environments/prod.tfvars.example`
+- `ENVIRONMENT-ARCHITECTURE.md`
 
 Untuk menjalankan environment tertentu, salin dulu file example ke file lokal lalu gunakan:
 
@@ -528,8 +551,10 @@ Isinya:
 - Prometheus config
 - Loki config
 - Grafana datasource provisioning
+- Grafana dashboard provisioning
+- Alertmanager config
 - `docker-compose.yml.example`
-- alert rules dasar
+- alert rules dasar dan baseline host alert
 
 Untuk host yang benar-benar menyala, playbook Ansible juga sekarang menambahkan baseline berikut:
 
@@ -548,3 +573,12 @@ Service yang aktif:
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
 - Loki: `http://localhost:3100`
+- Alertmanager: `http://localhost:9093`
+
+Dashboard dan alerting yang sudah disiapkan:
+
+- dashboard Grafana `Platform Overview`
+- alert `InstanceDown`
+- alert `HostHighCpuUsage`
+- alert `HostHighMemoryUsage`
+- alert `HostDiskAlmostFull`

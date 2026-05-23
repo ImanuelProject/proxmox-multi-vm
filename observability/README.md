@@ -5,6 +5,7 @@ Folder ini berisi baseline observability sederhana untuk menunjukkan arah platfo
 - Prometheus untuk metrics
 - Grafana untuk dashboard
 - Loki untuk logs
+- Alertmanager untuk alert routing dasar
 
 Konfigurasi ini belum diikat langsung ke Terraform/Proxmox karena tujuan utamanya adalah:
 
@@ -17,6 +18,8 @@ Konfigurasi ini belum diikat langsung ke Terraform/Proxmox karena tujuan utamany
 ```text
 observability/
   docker-compose.yml.example
+  alertmanager/
+    alertmanager.yml
   prometheus/
     prometheus.yml
     alert.rules.yml
@@ -26,6 +29,10 @@ observability/
     provisioning/
       datasources/
         datasources.yml
+      dashboards/
+        dashboards.yml
+        json/
+          platform-overview.json
 ```
 
 ## Cara Pakai Cepat

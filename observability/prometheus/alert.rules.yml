@@ -11,3 +11,46 @@ groups:
           summary: "Instance down"
           description: >-
             Prometheus gagal scrape target selama lebih dari 2 menit.
+
+      - alert: HostHighCpuUsage
+        expr: >-
+          100 - (
+            avg by(instance) (
+              rate(node_cpu_seconds_total{mode="idle"}[5m])
+            ) * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: >-
+            Penggunaan CPU berada di atas 85 persen selama lebih dari 10 menit.
+
+      - alert: HostHighMemoryUsage
+        expr: >-
+          (1 - (
+            node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+          )) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: >-
+            Penggunaan memory berada di atas 90 persen
+            selama lebih dari 10 menit.
+
+      - alert: HostDiskAlmostFull
+        expr: >-
+          (1 - (
+            node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} /
+            node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}
+          )) * 100 > 85
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk almost full on {{ $labels.instance }}"
+          description: >-
+            Utilisasi disk berada di atas 85 persen selama lebih dari 15 menit.

@@ -40,6 +40,14 @@ jobs:
           TF_VAR_proxmox_api_token: root@pam!ci=dummy-token
         run: terraform validate
 
+      - name: Terraform plan
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_api_token: root@pam!ci=dummy-token
+        run: |
+          terraform plan -refresh=false -lock=false -input=false -out=tfplan
+          terraform show -no-color tfplan > tfplan.txt
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -60,3 +68,11 @@ jobs:
 
       - name: Lint YAML files
         run: yamllint ansible .github/workflows
+
+      - name: Upload Terraform plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-report
+          path: |
+            terraform/tfplan
+            terraform/tfplan.txt

@@ -1,11 +1,11 @@
 output "vm_list" {
   value = {
-    for name, vm in local.normalized_vms : name => {
+    for name, vm in module.workloads.normalized_vms : name => {
       ip    = vm.vm_ip
       role  = vm.role
       tags  = vm.tags
       vm_id = vm.vm_id
-      ssh   = var.vm_started ? "ssh ${(var.ansible_user != null ? var.ansible_user : (var.workload_type == "lxc" ? "root" : var.vm_user))}@${vm.vm_ip}" : "not available while vm_started = false"
+      ssh   = var.vm_started ? "ssh ${module.workloads.effective_ansible_user}@${vm.vm_ip}" : "not available while vm_started = false"
     }
   }
 }
