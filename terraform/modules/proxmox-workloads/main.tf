@@ -7,8 +7,9 @@ terraform {
 }
 
 locals {
-  workload_is_vm  = var.workload_type == "vm"
-  workload_is_lxc = var.workload_type == "lxc"
+  workload_is_vm       = var.workload_type == "vm"
+  workload_is_lxc      = var.workload_type == "lxc"
+  ssh_public_key_value = var.ssh_public_key != null ? trimspace(var.ssh_public_key) : trimspace(try(file(pathexpand(var.ssh_public_key_path)), ""))
   effective_ansible_user = var.ansible_user != null ? var.ansible_user : (
     local.workload_is_lxc ? "root" : var.vm_user
   )
@@ -90,7 +91,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
 
     user_account {
       username = var.vm_user
-      keys     = [trimspace(file(pathexpand(var.ssh_public_key_path)))]
+      keys     = local.ssh_public_key_value != "" ? [local.ssh_public_key_value] : []
     }
   }
 
@@ -147,7 +148,7 @@ resource "proxmox_virtual_environment_container" "ubuntu_lxc" {
     }
 
     user_account {
-      keys = [trimspace(file(pathexpand(var.ssh_public_key_path)))]
+      keys = local.ssh_public_key_value != "" ? [local.ssh_public_key_value] : []
     }
   }
 

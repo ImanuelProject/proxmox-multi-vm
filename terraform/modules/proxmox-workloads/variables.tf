@@ -69,6 +69,12 @@ variable "ssh_public_key_path" {
   type = string
 }
 
+variable "ssh_public_key" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
 variable "cloud_image_file_id" {
   type     = string
   nullable = true

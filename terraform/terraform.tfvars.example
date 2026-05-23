@@ -15,6 +15,8 @@ dns_servers = ["8.8.8.8", "1.1.1.1"]
 vm_user              = "ubuntu"
 ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
 ssh_private_key_path = "~/.ssh/id_ed25519"
+# Opsional untuk CI atau environment tanpa file key lokal:
+# ssh_public_key      = "ssh-ed25519 AAAA... user@example"
 vm_started           = false
 
 cloud_image_file_id   = "local:import/noble-server-cloudimg-amd64.qcow2"

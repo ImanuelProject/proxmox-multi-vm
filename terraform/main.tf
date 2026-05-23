@@ -37,6 +37,7 @@ module "workloads" {
   vm_cidr                         = var.vm_cidr
   dns_servers                     = var.dns_servers
   ssh_public_key_path             = var.ssh_public_key_path
+  ssh_public_key                  = var.ssh_public_key
   cloud_image_file_id             = var.cloud_image_file_id
   container_template_file_id      = var.container_template_file_id
   container_operating_system_type = var.container_operating_system_type

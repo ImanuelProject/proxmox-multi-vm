@@ -79,6 +79,13 @@ variable "ssh_public_key_path" {
   description = "Path SSH public key"
 }
 
+variable "ssh_public_key" {
+  type        = string
+  description = "Isi SSH public key secara inline. Jika diisi, Terraform tidak akan membaca file dari ssh_public_key_path."
+  default     = null
+  nullable    = true
+}
+
 variable "ssh_private_key_path" {
   type        = string
   description = "Path SSH private key untuk Ansible"
