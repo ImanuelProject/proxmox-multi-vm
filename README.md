@@ -1,5 +1,5 @@
 # Proxmox Multi-VM Lab
-
+dc30af0d-000c-4fd8-aab1-477177e48ade
 Lab ini dipakai untuk:
 
 - menjalankan Proxmox VE di dalam VirtualBox
