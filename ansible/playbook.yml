@@ -2,7 +2,6 @@
 - name: Apply common baseline to all provisioned hosts
   hosts: proxmox_vms
   become: true
-
   tasks:
     - name: Wait until SSH is ready
       ansible.builtin.wait_for_connection:
@@ -14,17 +13,7 @@
 
     - name: Install basic packages
       ansible.builtin.apt:
-        name:
-          - curl
-          - wget
-          - git
-          - vim
-          - htop
-          - net-tools
-          - ca-certificates
-          - gnupg
-          - ufw
-          - rsyslog
+        name: [curl, wget, git, vim, htop, net-tools, ca-certificates, gnupg, ufw, rsyslog]
         state: present
 
     - name: Install node exporter
@@ -49,141 +38,342 @@
         state: enabled
         policy: deny
 
-    - name: Print baseline success message
-      ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} baseline berhasil diterapkan."
-
-- name: Configure web tier
-  hosts: role_web
-  become: true
-
-  tasks:
-    - name: Install Nginx
-      ansible.builtin.apt:
-        name: nginx
-        state: present
-
-    - name: Enable and start Nginx
-      ansible.builtin.service:
-        name: nginx
-        state: started
-        enabled: true
-
-    - name: Create simple Nginx index page
-      ansible.builtin.copy:
-        dest: /var/www/html/index.html
-        content: |
-          <html>
-          <head>
-            <title>Web Tier</title>
-          </head>
-          <body>
-            <h1>Web node berhasil dibuat dengan Terraform</h1>
-            <p>Server ini dikonfigurasi otomatis menggunakan Ansible.</p>
-            <p>Role: web</p>
-            <p>Hostname: {{ inventory_hostname }}</p>
-          </body>
-          </html>
-        owner: www-data
-        group: www-data
-        mode: "0644"
-
-    - name: Allow HTTP traffic
-      community.general.ufw:
-        rule: allow
-        port: "80"
-        proto: tcp
-
-- name: Configure app tier
+# --- KAFKA BROKER (role_app) ---
+- name: Configure Kafka Broker
   hosts: role_app
   become: true
-
   tasks:
-    - name: Install Python app runtime packages
+    - name: Install Default JRE
       ansible.builtin.apt:
-        name:
-          - python3
-          - python3-venv
-          - python3-pip
+        name: default-jre
         state: present
 
-    - name: Create app role marker
-      ansible.builtin.copy:
-        dest: /opt/app-role.txt
-        content: |
-          Role: app
-          Hostname: {{ inventory_hostname }}
-          Managed by: Ansible
-        mode: "0644"
+    - name: Download Apache Kafka archive
+      ansible.builtin.get_url:
+        url: https://downloads.apache.org/kafka/4.3.0/kafka_2.13-4.3.0.tgz
+        dest: /tmp/kafka.tgz
+        timeout: 600
 
-- name: Configure database tier
+    - name: Extract Apache Kafka
+      ansible.builtin.unarchive:
+        src: /tmp/kafka.tgz
+        dest: /opt
+        remote_src: yes
+        creates: /opt/kafka_2.13-4.3.0
+
+    - name: Create symlink for Kafka
+      ansible.builtin.file:
+        src: /opt/kafka_2.13-4.3.0
+        dest: /opt/kafka
+        state: link
+
+    - name: Allow Kafka KRaft ports
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: ["9092", "9093"]
+
+    - name: Configure Kafka listeners
+      ansible.builtin.lineinfile:
+        path: /opt/kafka/config/server.properties
+        regexp: '^#?listeners='
+        line: "listeners=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+
+    - name: Configure Kafka advertised.listeners
+      ansible.builtin.lineinfile:
+        path: /opt/kafka/config/server.properties
+        regexp: '^#?advertised\.listeners='
+        line: "advertised.listeners=PLAINTEXT://{{ ansible_host }}:9092"
+
+    - name: Generate KRaft Cluster ID
+      ansible.builtin.command: /opt/kafka/bin/kafka-storage.sh random-uuid
+      register: kafka_cluster_id
+      run_once: true
+
+    - name: Format KRaft Storage
+      ansible.builtin.shell: /opt/kafka/bin/kafka-storage.sh format -t {{ kafka_cluster_id.stdout }} -c /opt/kafka/config/server.properties --standalone && touch /tmp/kraft-formatted
+      args:
+        creates: /tmp/kraft-formatted
+
+    - name: Stop old Zookeeper if exists
+      ansible.builtin.systemd:
+        name: zookeeper
+        state: stopped
+        enabled: no
+      ignore_errors: true
+
+    - name: Create Kafka systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/kafka.service
+        content: |
+          [Unit]
+          Description=Apache Kafka (KRaft)
+          After=network.target
+
+          [Service]
+          Type=simple
+          Environment="KAFKA_HEAP_OPTS=-Xmx512M -Xms512M"
+          ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+          ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+          Restart=on-abnormal
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd and restart Kafka
+      ansible.builtin.systemd:
+        name: kafka
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+# --- KAFKA CONNECT (role_web) ---
+- name: Configure Kafka Connect
+  hosts: role_web
+  become: true
+  tasks:
+    - name: Install Default JRE
+      ansible.builtin.apt:
+        name: default-jre
+        state: present
+
+    - name: Download Apache Kafka archive
+      ansible.builtin.get_url:
+        url: https://downloads.apache.org/kafka/4.3.0/kafka_2.13-4.3.0.tgz
+        dest: /tmp/kafka.tgz
+        timeout: 600
+
+    - name: Extract Apache Kafka
+      ansible.builtin.unarchive:
+        src: /tmp/kafka.tgz
+        dest: /opt
+        remote_src: yes
+        creates: /opt/kafka_2.13-4.3.0
+
+    - name: Create symlink for Kafka
+      ansible.builtin.file:
+        src: /opt/kafka_2.13-4.3.0
+        dest: /opt/kafka
+        state: link
+        
+    - name: Create plugins directory
+      ansible.builtin.file:
+        path: /opt/kafka/plugins
+        state: directory
+
+    - name: Download Debezium PostgreSQL Connector
+      ansible.builtin.unarchive:
+        src: https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.5.4.Final/debezium-connector-postgres-2.5.4.Final-plugin.tar.gz
+        dest: /opt/kafka/plugins/
+        remote_src: yes
+        creates: /opt/kafka/plugins/debezium-connector-postgres
+
+    - name: Configure Kafka Connect properties
+      ansible.builtin.lineinfile:
+        path: /opt/kafka/config/connect-distributed.properties
+        regexp: '^#?plugin\.path='
+        line: 'plugin.path=/opt/kafka/plugins'
+
+    - name: Set Kafka Connect Bootstrap Servers to app-01
+      ansible.builtin.lineinfile:
+        path: /opt/kafka/config/connect-distributed.properties
+        regexp: '^bootstrap\.servers='
+        line: 'bootstrap.servers=192.168.177.102:9092'
+
+    - name: Allow Kafka Connect REST API port
+      community.general.ufw:
+        rule: allow
+        port: "8083"
+        proto: tcp
+
+    - name: Create Kafka Connect systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/kafka-connect.service
+        content: |
+          [Unit]
+          Description=Kafka Connect Distributed
+          Requires=network.target
+          After=network.target
+
+          [Service]
+          Type=simple
+          Environment="KAFKA_HEAP_OPTS=-Xmx512M -Xms512M"
+          ExecStart=/opt/kafka/bin/connect-distributed.sh /opt/kafka/config/connect-distributed.properties
+          ExecStop=/opt/kafka/bin/connect-stop.sh
+          Restart=on-abnormal
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd and restart Kafka Connect
+      ansible.builtin.systemd:
+        name: kafka-connect
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+# --- DATABASE (role_db) ---
+- name: Configure PostgreSQL for CDC
   hosts: role_db
   become: true
-
   tasks:
     - name: Install PostgreSQL
       ansible.builtin.apt:
         name: postgresql
         state: present
 
-    - name: Enable and start PostgreSQL
+    - name: Allow PostgreSQL port
+      community.general.ufw:
+        rule: allow
+        port: "5432"
+        proto: tcp
+
+    - name: Configure PostgreSQL wal_level to logical
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/16/main/postgresql.conf
+        regexp: '^#?wal_level\s*='
+        line: 'wal_level = logical'
+      notify: Restart PostgreSQL
+
+    - name: Configure listen_addresses
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/16/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*='
+        line: "listen_addresses = '*'"
+      notify: Restart PostgreSQL
+      
+    - name: Configure pg_hba.conf for remote access
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/16/main/pg_hba.conf
+        line: 'host    all             all             0.0.0.0/0               md5'
+        insertafter: EOF
+      notify: Restart PostgreSQL
+
+  handlers:
+    - name: Restart PostgreSQL
       ansible.builtin.service:
         name: postgresql
-        state: started
-        enabled: true
+        state: restarted
 
-    - name: Create DB role marker
-      ansible.builtin.copy:
-        dest: /opt/db-role.txt
-        content: |
-          Role: db
-          Hostname: {{ inventory_hostname }}
-          Managed by: Ansible
-        mode: "0644"
-
+# --- MONITORING (role_monitoring) ---
 - name: Configure monitoring tier
   hosts: role_monitoring
   become: true
-
   tasks:
     - name: Install monitoring helper packages
       ansible.builtin.apt:
-        name:
-          - prometheus
-          - sysstat
-          - btop
+        name: [prometheus, sysstat, btop]
         state: present
 
-    - name: Enable and start Prometheus
-      ansible.builtin.service:
+    - name: Configure Prometheus targets
+      ansible.builtin.copy:
+        dest: /etc/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+
+          scrape_configs:
+            - job_name: 'prometheus'
+              static_configs:
+                - targets: ['localhost:9090']
+                
+            - job_name: 'node_exporter'
+              static_configs:
+                - targets: 
+                  - '192.168.177.101:9100'
+                  - '192.168.177.102:9100'
+                  - '192.168.177.103:9100'
+                  - '192.168.177.104:9100'
+                  - '192.168.177.105:9100'
+
+    - name: Enable and restart Prometheus
+      ansible.builtin.systemd:
         name: prometheus
-        state: started
-        enabled: true
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
 
-    - name: Create observability workspace directory
+    - name: Download Redpanda Console
+      ansible.builtin.get_url:
+        url: https://github.com/redpanda-data/console/releases/download/v2.8.15/redpanda_console_2.8.15_linux_amd64.tar.gz
+        dest: /tmp/redpanda-console.tar.gz
+
+    - name: Extract Redpanda Console
+      ansible.builtin.unarchive:
+        src: /tmp/redpanda-console.tar.gz
+        dest: /usr/local/bin/
+        remote_src: yes
+        extra_opts:
+          - redpanda-console
+
+    - name: Create Redpanda Console config directory
       ansible.builtin.file:
-        path: /opt/platform-observability
+        path: /etc/redpanda-console
         state: directory
-        mode: "0755"
 
-    - name: Create monitoring role marker
+    - name: Configure Redpanda Console
       ansible.builtin.copy:
-        dest: /opt/monitoring-role.txt
+        dest: /etc/redpanda-console/config.yaml
         content: |
-          Role: monitoring
-          Hostname: {{ inventory_hostname }}
-          Managed by: Ansible
-        mode: "0644"
+          kafka:
+            brokers: ["192.168.177.102:9092"]
+            clientId: console
+          connect:
+            enabled: true
+            clusters:
+              - name: connect-cluster
+                url: http://192.168.177.101:8083
+          server:
+            listenPort: 8080
 
-    - name: Create basic observability note
+    - name: Allow Redpanda Console port
+      community.general.ufw:
+        rule: allow
+        port: "8080"
+        proto: tcp
+
+    - name: Create Redpanda Console systemd service
       ansible.builtin.copy:
-        dest: /opt/platform-observability/README.txt
+        dest: /etc/systemd/system/redpanda-console.service
         content: |
-          This node is prepared as the monitoring tier.
-          Installed services:
-          - prometheus
-          - prometheus-node-exporter
-          - rsyslog
-          Extend this node with Grafana and Loki
-          or connect it to an external observability stack.
-        mode: "0644"
+          [Unit]
+          Description=Redpanda Console
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/redpanda-console --config.filepath=/etc/redpanda-console/config.yaml
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start Redpanda Console
+      ansible.builtin.systemd:
+        name: redpanda-console
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Download Grafana package
+      ansible.builtin.get_url:
+        url: https://dl.grafana.com/oss/release/grafana_11.0.0_amd64.deb
+        dest: /tmp/grafana.deb
+        timeout: 600
+
+    - name: Install Grafana
+      ansible.builtin.apt:
+        deb: /tmp/grafana.deb
+
+    - name: Allow Grafana port
+      community.general.ufw:
+        rule: allow
+        port: "3000"
+        proto: tcp
+
+    - name: Enable and start Grafana
+      ansible.builtin.systemd:
+        name: grafana-server
+        state: started
+        enabled: yes

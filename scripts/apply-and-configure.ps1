@@ -106,7 +106,7 @@ $wslExe = Assert-WslCommand -CommandName "ansible-playbook" -InstallHint "Instal
 $ansibleDirWsl = Convert-WindowsPathToWslPath -WindowsPath $ansibleDir
 $inventoryPathWsl = Convert-WindowsPathToWslPath -WindowsPath $inventoryPath
 $playbookPathWsl = Convert-WindowsPathToWslPath -WindowsPath $playbookPath
-$bashCommand = "cd $(Quote-BashLiteral $ansibleDirWsl) && ansible-playbook -i $(Quote-BashLiteral $inventoryPathWsl) $(Quote-BashLiteral $playbookPathWsl)"
+$bashCommand = "cd $(Quote-BashLiteral $ansibleDirWsl) && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i $(Quote-BashLiteral $inventoryPathWsl) $(Quote-BashLiteral $playbookPathWsl)"
 
 Write-Host "==> Running ansible-playbook via WSL"
 & $wslExe sh -lc $bashCommand

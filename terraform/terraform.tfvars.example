@@ -1,28 +1,33 @@
-proxmox_endpoint  = "https://192.168.56.20:8006/"
+# Kredensial API Proxmox (Opsional: bisa di-set via Environment Variable TF_VAR_proxmox_api_token)
+proxmox_api_token    = "root@pam!mytoken=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_endpoint     = "https://192.168.1.100:8006/"
 proxmox_tls_insecure = true
-workload_type = "vm"
 
-proxmox_node     = "pve-lab"
-vm_datastore_id  = "local-lvm"
-network_bridge   = "vmbr0"
-default_tags     = ["terraform", "ansible", "ubuntu"]
+# Jenis workload: "vm" (Virtual Machine) atau "lxc" (Linux Container)
+workload_type = "lxc"
+vm_started    = true
 
-vm_gateway = "192.168.10.1"
+# Pengaturan Proxmox Node & Storage
+proxmox_node    = "pve"
+vm_datastore_id = "local-lvm"
+network_bridge  = "vmbr0"
+default_tags    = ["terraform", "ansible", "ubuntu"]
+
+# Jaringan Dasar (Sesuaikan dengan subnet jaringan fisik/virtual router Anda)
+vm_gateway = "192.168.1.1"
 vm_cidr    = 24
-
 dns_servers = ["8.8.8.8", "1.1.1.1"]
 
+# Kredensial VM/LXC
 vm_user              = "ubuntu"
-ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
-ssh_private_key_path = "~/.ssh/id_ed25519"
-# Opsional untuk CI atau environment tanpa file key lokal:
-# ssh_public_key      = "ssh-ed25519 AAAA... user@example"
-vm_started           = false
+ssh_public_key_path  = "~/.ssh/id_rsa.pub"
+ssh_private_key_path = "~/.ssh/id_rsa"
 
-cloud_image_file_id   = "local:import/noble-server-cloudimg-amd64.qcow2"
-# Ganti nilai ini jika ingin memakai LXC, lalu set workload_type = "lxc"
-# container_template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+# Template File (Sesuaikan dengan ID/Nama file di storage Proxmox Anda)
+cloud_image_file_id = "local:import/noble-server-cloudimg-amd64.qcow2"
+container_template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
 
+# Spesifikasi Default
 vm_defaults = {
   role      = "app"
   cpu_cores = 1
@@ -30,43 +35,48 @@ vm_defaults = {
   disk_size = 12
 }
 
+# Definisi Cluster Server (Di-tuning untuk Kafka CDC)
 vms = {
   web-01 = {
-    vm_id = 101
-    vm_ip = "192.168.10.101"
-    role  = "web"
-    tags  = ["frontend"]
+    vm_id     = 101
+    vm_ip     = "192.168.1.101"
+    role      = "web"
+    tags      = ["frontend", "kafka-connect"]
+    cpu_cores = 2
+    memory    = 2048
   }
 
   app-01 = {
     vm_id     = 102
-    vm_ip     = "192.168.10.102"
+    vm_ip     = "192.168.1.102"
     role      = "app"
-    tags      = ["backend"]
+    tags      = ["backend", "kafka-broker"]
+    cpu_cores = 2
+    memory    = 2048
   }
 
   db-01 = {
     vm_id     = 103
-    vm_ip     = "192.168.10.103"
+    vm_ip     = "192.168.1.103"
     role      = "db"
-    tags      = ["backend"]
+    tags      = ["database", "postgresql"]
     cpu_cores = 2
     memory    = 2048
   }
 
   monitoring-01 = {
     vm_id     = 104
-    vm_ip     = "192.168.10.104"
+    vm_ip     = "192.168.1.104"
     role      = "monitoring"
-    tags      = ["ops"]
+    tags      = ["ops", "grafana"]
     disk_size = 20
   }
 
   app-02 = {
     vm_id     = 105
-    vm_ip     = "192.168.10.105"
+    vm_ip     = "192.168.1.105"
     role      = "app"
-    tags      = ["backend"]
+    tags      = ["backend", "kafka-broker"]
     cpu_cores = 2
     memory    = 2048
   }

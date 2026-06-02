@@ -42,11 +42,12 @@ observability/docker-compose.yml
 *.key
 *.p12
 *.pfx
+lab_key
+lab_key.pub
 secrets/
 
 # Local docs and interview notes
-docs/
-
+# docs/ (Komentar: Saya menghapus ini agar folder docs Anda BISA ter-push ke GitHub!)
 # OS/editor noise
 Thumbs.db
 .DS_Store
