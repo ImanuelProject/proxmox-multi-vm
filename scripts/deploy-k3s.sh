@@ -15,7 +15,7 @@ echo "==> Validating K3s prerequisites"
 assert_path_exists "$INVENTORY_PATH" "Ansible Inventory (Jalankan Terraform apply terlebih dahulu)"
 assert_path_exists "$PLAYBOOK_PATH" "Ansible Playbook k3s.yml"
 
-WSL_EXE=$(assert_wsl_command "ansible-playbook" "Install Ansible di distro WSL2 atau gunakan flow tanpa Ansible.")
+WSL_EXE=$(assert_wsl_command "ansible-playbook" "Install Ansible di distro WSL2 atau gunakan flow tanpa Ansible." | tr -d '\r')
 
 echo "==> Running K3s and ArgoCD installation via Ansible"
 

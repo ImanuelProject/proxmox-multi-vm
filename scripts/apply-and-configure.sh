@@ -93,7 +93,7 @@ if [ "$WORKLOAD_TYPE" = "vm" ] && [ "$VM_STARTED" = "false" ]; then
     exit 1
 fi
 
-WSL_EXE=$(assert_wsl_command "ansible-playbook" "Install Ansible di distro WSL2 atau gunakan -SkipAnsible.")
+WSL_EXE=$(assert_wsl_command "ansible-playbook" "Install Ansible di distro WSL2 atau gunakan -SkipAnsible." | tr -d '\r')
 ANSIBLE_DIR_WSL=$(convert_windows_path_to_wsl_path "$ANSIBLE_DIR")
 INVENTORY_PATH_WSL=$(convert_windows_path_to_wsl_path "$INVENTORY_PATH")
 PLAYBOOK_PATH_WSL=$(convert_windows_path_to_wsl_path "$PLAYBOOK_PATH")
