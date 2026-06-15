@@ -8,7 +8,7 @@ Dokumen ini merangkum baseline secret handling dan operasional untuk repo homela
 
 - jangan simpan token Proxmox di `terraform.tfvars`
 - jangan commit file `*.tfvars`
-- gunakan environment variable per sesi PowerShell
+- gunakan environment variable per sesi Bash
 
 ### Format Token
 
@@ -28,25 +28,25 @@ root@pam!terraform=12345678-1234-1234-1234-123456789abc
 
 Interaktif:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
 ```
 
 Langsung dengan nilai:
 
-```powershell
-.\scripts\set-proxmox-token.ps1 -TokenValue "root@pam!terraform=SECRET"
+```bash
+source ./scripts/set-proxmox-token.sh -TokenValue "root@pam!terraform=SECRET"
 ```
 
 ### Verifikasi
 
-```powershell
-.\scripts\check-prereqs.ps1
+```bash
+./scripts/check-prereqs.sh
 ```
 
 Atau langsung ke API:
 
-```powershell
+```bash
 curl.exe -k -i -H "Authorization: PVEAPIToken=$env:TF_VAR_proxmox_api_token" "https://192.168.56.20:8006/api2/json/version"
 ```
 
@@ -54,25 +54,25 @@ curl.exe -k -i -H "Authorization: PVEAPIToken=$env:TF_VAR_proxmox_api_token" "ht
 
 ### Flow Harian API-Only
 
-```powershell
-.\scripts\start-proxmox-lab.ps1 -Type headless
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/start-proxmox-lab.sh -Type headless
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 ### Flow Environment-Aware
 
-```powershell
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1 -EnvironmentName dev
-.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev
+```bash
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh -EnvironmentName dev
+./scripts/apply-and-configure.sh -SkipAnsible -EnvironmentName dev
 ```
 
 ### Flow Destroy
 
-```powershell
-.\scripts\destroy-lab.ps1 -EnvironmentName dev
+```bash
+./scripts/destroy-lab.sh -EnvironmentName dev
 ```
 
 ## Checklist Operasional
@@ -88,7 +88,7 @@ curl.exe -k -i -H "Authorization: PVEAPIToken=$env:TF_VAR_proxmox_api_token" "ht
 Jika token tidak valid:
 
 1. buat token baru di Proxmox UI
-2. set ulang ke sesi PowerShell
+2. set ulang ke sesi Bash
 3. jangan ubah repo untuk menyimpan token itu
 
 ## Yang Aman Di-commit

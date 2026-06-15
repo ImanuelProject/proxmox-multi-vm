@@ -46,7 +46,7 @@ Selain file `terraform.tfvars`, pastikan Anda juga mengekspor API Token atau kre
 export PM_API_TOKEN_ID="user@pam!token_id"
 export PM_API_TOKEN_SECRET="xxxx-xxxx-xxxx-xxxx"
 
-# Untuk Windows PowerShell
+# Untuk Windows Bash
 $env:PM_API_TOKEN_ID="user@pam!token_id"
 $env:PM_API_TOKEN_SECRET="xxxx-xxxx-xxxx-xxxx"
 ```

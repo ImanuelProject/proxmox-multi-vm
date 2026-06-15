@@ -96,7 +96,7 @@ Target minimum:
 
 ### 4. Integrasi Secret Management Yang Lebih Proper
 
-Saat ini token per sesi PowerShell sudah cukup untuk homelab.
+Saat ini token per sesi Bash sudah cukup untuk homelab.
 
 Tapi dari sudut pandang Platform Engineer, next step-nya adalah memperjelas strategi secret.
 

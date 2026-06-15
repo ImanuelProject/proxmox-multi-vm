@@ -1,5 +1,4 @@
 # Proxmox Multi-VM Lab
-dc30af0d-000c-4fd8-aab1-477177e48ade
 Lab ini dipakai untuk:
 
 - menjalankan Proxmox VE di dalam VirtualBox
@@ -30,13 +29,13 @@ Pilih aksi yang ingin Anda lakukan:
 - `terraform/environments/*.tfvars.example`: contoh konfigurasi per environment
 - `ansible/playbook.yml`: bootstrap dasar VM Ubuntu
 - `ansible/requirements.yml`: daftar collection Ansible untuk lint dan bootstrap
-- `scripts/apply-and-configure.ps1`: flow `terraform -> inventory -> ansible`
-- `scripts/destroy-lab.ps1`: flow `terraform destroy`
-- `scripts/start-proxmox-lab.ps1`: start VM host Proxmox di VirtualBox
-- `scripts/stop-proxmox-lab.ps1`: stop VM host Proxmox di VirtualBox
-- `scripts/check-prereqs.ps1`: cek dependency lokal
-- `scripts/set-proxmox-token.ps1`: set token Proxmox untuk sesi PowerShell aktif
-- `scripts/configure-hostonly-management.ps1`: pasang NIC host-only untuk management Proxmox
+- `scripts/apply-and-configure.sh`: flow `terraform -> inventory -> ansible`
+- `scripts/destroy-lab.sh`: flow `terraform destroy`
+- `scripts/start-proxmox-lab.sh`: start VM host Proxmox di VirtualBox
+- `scripts/stop-proxmox-lab.sh`: stop VM host Proxmox di VirtualBox
+- `scripts/check-prereqs.sh`: cek dependency lokal
+- `scripts/set-proxmox-token.sh`: set token Proxmox untuk sesi terminal Bash aktif
+- `scripts/configure-hostonly-management.sh`: pasang NIC host-only untuk management Proxmox
 - `PROXMOX-HOSTONLY-NETWORK.md`: panduan memindahkan IP management Proxmox ke host-only network
 - `ENVIRONMENT-ARCHITECTURE.md`: arsitektur logical per environment
 - `RUNBOOK.md`: panduan operasional harian
@@ -79,51 +78,51 @@ Checklist singkat:
 
 Command yang paling umum:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
-.\scripts\start-proxmox-lab.ps1
-.\scripts\check-prereqs.ps1 -RequireAnsible
-.\scripts\apply-and-configure.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
+./scripts/start-proxmox-lab.sh
+./scripts/check-prereqs.sh -RequireAnsible
+./scripts/apply-and-configure.sh
 ```
 
 Jika hanya ingin provisioning Terraform:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 Jika ingin destroy semua resource Terraform:
 
-```powershell
-.\scripts\destroy-lab.ps1
+```bash
+./scripts/destroy-lab.sh
 ```
 
 ## Tutorial Menjalankan Lab
 
 Urutan paling aman untuk menjalankan lab ini dari nol:
 
-1. Buka PowerShell di folder repo:
+1. Buka terminal Bash di folder repo:
 
-```powershell
-cd "D:\Data Joni\terraform\proxmox-multi-vm"
+```bash
+cd "d:/Data Joni/terraform/proxmox-multi-vm"
 ```
 
 2. Nyalakan VM host Proxmox:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1
+```bash
+./scripts/start-proxmox-lab.sh
 ```
 
 3. Set token Proxmox untuk sesi terminal aktif:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
 ```
 
 4. Cek prerequisite lokal:
 
-```powershell
-.\scripts\check-prereqs.ps1
+```bash
+./scripts/check-prereqs.sh
 ```
 
 5. Pastikan `terraform/terraform.tfvars` sudah sesuai kebutuhan.
@@ -137,26 +136,26 @@ vm_started    = false
 
 6. Jalankan provisioning Terraform:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 7. Lihat output Terraform dan inventory hasil generate:
 
-```powershell
-Get-Content .\ansible\inventory.ini
+```bash
+cat ./ansible/inventory.ini
 ```
 
 8. Jika ingin menghapus semua resource Terraform:
 
-```powershell
-.\scripts\destroy-lab.ps1
+```bash
+./scripts/destroy-lab.sh
 ```
 
 9. Jika selesai menggunakan lab, matikan VM host Proxmox:
 
-```powershell
-.\scripts\stop-proxmox-lab.ps1
+```bash
+./scripts/stop-proxmox-lab.sh
 ```
 
 Catatan:
@@ -343,8 +342,8 @@ Pola yang direkomendasikan:
 
 Script host-side:
 
-```powershell
-.\scripts\configure-hostonly-management.ps1
+```bash
+./scripts/configure-hostonly-management.sh
 ```
 
 Panduan guest-side:
@@ -360,37 +359,37 @@ Catatan:
 
 | Kebutuhan | Command |
 | --- | --- |
-| Start VM Proxmox via GUI | `.\scripts\start-proxmox-lab.ps1` |
-| Start VM Proxmox headless | `.\scripts\start-proxmox-lab.ps1 -Type headless` |
-| Stop VM Proxmox graceful | `.\scripts\stop-proxmox-lab.ps1` |
-| Stop VM Proxmox paksa | `.\scripts\stop-proxmox-lab.ps1 -Mode poweroff` |
-| Set token Proxmox per sesi | `.\scripts\set-proxmox-token.ps1` |
-| Cek dependency dasar | `.\scripts\check-prereqs.ps1` |
-| Cek dependency termasuk Ansible | `.\scripts\check-prereqs.ps1 -RequireAnsible` |
-| Provision Terraform saja | `.\scripts\apply-and-configure.ps1 -SkipAnsible` |
-| Provision environment tertentu | `.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev` |
-| Provision + bootstrap | `.\scripts\apply-and-configure.ps1` |
-| Provision tanpa prompt approval | `.\scripts\apply-and-configure.ps1 -AutoApprove` |
-| Destroy resource | `.\scripts\destroy-lab.ps1` |
-| Destroy environment tertentu | `.\scripts\destroy-lab.ps1 -EnvironmentName dev` |
-| Destroy tanpa prompt approval | `.\scripts\destroy-lab.ps1 -AutoApprove` |
+| Start VM Proxmox via GUI | `./scripts/start-proxmox-lab.sh` |
+| Start VM Proxmox headless | `./scripts/start-proxmox-lab.sh -Type headless` |
+| Stop VM Proxmox graceful | `./scripts/stop-proxmox-lab.sh` |
+| Stop VM Proxmox paksa | `./scripts/stop-proxmox-lab.sh -Mode poweroff` |
+| Set token Proxmox per sesi | `source ./scripts/set-proxmox-token.sh` |
+| Cek dependency dasar | `./scripts/check-prereqs.sh` |
+| Cek dependency termasuk Ansible | `./scripts/check-prereqs.sh -RequireAnsible` |
+| Provision Terraform saja | `./scripts/apply-and-configure.sh -SkipAnsible` |
+| Provision environment tertentu | `./scripts/apply-and-configure.sh -SkipAnsible -EnvironmentName dev` |
+| Provision + bootstrap | `./scripts/apply-and-configure.sh` |
+| Provision tanpa prompt approval | `./scripts/apply-and-configure.sh -AutoApprove` |
+| Destroy resource | `./scripts/destroy-lab.sh` |
+| Destroy environment tertentu | `./scripts/destroy-lab.sh -EnvironmentName dev` |
+| Destroy tanpa prompt approval | `./scripts/destroy-lab.sh -AutoApprove` |
 
 <details>
 <summary>Contoh command lengkap</summary>
 
-```powershell
-.\scripts\start-proxmox-lab.ps1
-.\scripts\start-proxmox-lab.ps1 -Type headless
-.\scripts\stop-proxmox-lab.ps1
-.\scripts\stop-proxmox-lab.ps1 -Mode poweroff
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1
-.\scripts\check-prereqs.ps1 -RequireAnsible
-.\scripts\apply-and-configure.ps1
-.\scripts\apply-and-configure.ps1 -SkipAnsible
-.\scripts\apply-and-configure.ps1 -AutoApprove
-.\scripts\destroy-lab.ps1
-.\scripts\destroy-lab.ps1 -AutoApprove
+```bash
+./scripts/start-proxmox-lab.sh
+./scripts/start-proxmox-lab.sh -Type headless
+./scripts/stop-proxmox-lab.sh
+./scripts/stop-proxmox-lab.sh -Mode poweroff
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh
+./scripts/check-prereqs.sh -RequireAnsible
+./scripts/apply-and-configure.sh
+./scripts/apply-and-configure.sh -SkipAnsible
+./scripts/apply-and-configure.sh -AutoApprove
+./scripts/destroy-lab.sh
+./scripts/destroy-lab.sh -AutoApprove
 ```
 
 </details>
@@ -488,23 +487,23 @@ Prioritas yang paling pragmatis:
 
 ## Secret Handling
 
-Set token Proxmox untuk sesi PowerShell aktif:
+Set token Proxmox untuk sesi terminal Bash aktif:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
 ```
 
 Atau jika ingin langsung memberi nilainya:
 
-```powershell
-.\scripts\set-proxmox-token.ps1 -TokenValue "root@pam!terraform=your-token"
+```bash
+source ./scripts/set-proxmox-token.sh -TokenValue "root@pam!terraform=your-token"
 ```
 
 Lalu jalankan flow normal:
 
-```powershell
-.\scripts\check-prereqs.ps1
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/check-prereqs.sh
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 ## CI-CD Dan Environment-Aware
@@ -537,9 +536,9 @@ Repo ini juga mendukung struktur environment-aware melalui:
 
 Untuk menjalankan environment tertentu, salin dulu file example ke file lokal lalu gunakan:
 
-```powershell
-Copy-Item terraform\environments\dev.tfvars.example terraform\environments\dev.tfvars
-.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev
+```bash
+cp terraform/environments/dev.tfvars.example terraform/environments/dev.tfvars
+./scripts/apply-and-configure.sh -SkipAnsible -EnvironmentName dev
 ```
 
 ## Observability Dasar
@@ -564,8 +563,8 @@ Untuk host yang benar-benar menyala, playbook Ansible juga sekarang menambahkan 
 
 Cara cepat menjalankan stack observability lokal:
 
-```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" compose -f ".\observability\docker-compose.yml.example" up -d
+```bash
+docker compose -f ./observability/docker-compose.yml.example up -d
 ```
 
 Service yang aktif:

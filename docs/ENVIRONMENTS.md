@@ -26,28 +26,28 @@ Folder `terraform/environments/` dipakai untuk:
 
 1. Salin example environment ke file kerja lokal:
 
-```powershell
-Copy-Item terraform\environments\dev.tfvars.example terraform\environments\dev.tfvars
+```bash
+cp terraform/environments\dev.tfvars.example terraform/environments\dev.tfvars
 ```
 
 2. Edit file hasil salin sesuai kebutuhan.
 
 3. Jalankan script dengan environment name:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName dev
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible -EnvironmentName dev
 ```
 
 Atau langsung dengan var-file eksplisit:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible -VarFile "terraform\environments\dev.tfvars"
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible -VarFile "terraform/environments\dev.tfvars"
 ```
 
 Destroy juga mendukung pola yang sama:
 
-```powershell
-.\scripts\destroy-lab.ps1 -EnvironmentName dev
+```bash
+./scripts/destroy-lab.sh -EnvironmentName dev
 ```
 
 ## Kapan Memakai Masing-Masing Pola

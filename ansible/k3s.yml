@@ -1,0 +1,38 @@
+---
+- name: Deploy K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  vars:
+    # K3s version to install
+    k3s_release_version: "v1.28.4+k3s2"
+    
+
+    # Privilege escalation
+    k3s_become: true
+    
+    # Disable experimental features for stability
+    k3s_use_experimental: false
+
+    # Use IP address for registration to avoid DNS resolution issues in LXC
+    k3s_registration_address: "{{ hostvars[groups['k3s_master'][0]]['ansible_host'] }}"
+
+  pre_tasks:
+    - name: Ensure /etc/tmpfiles.d exists
+      ansible.builtin.file:
+        path: /etc/tmpfiles.d
+        state: directory
+        mode: '0755'
+
+    - name: Create systemd-tmpfiles configuration for /dev/kmsg
+      ansible.builtin.copy:
+        dest: /etc/tmpfiles.d/kmsg.conf
+        content: "L /dev/kmsg - - - - /dev/console\n"
+        mode: '0644'
+
+    - name: Apply systemd-tmpfiles rule
+      ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/kmsg.conf
+      register: tmpfiles_result
+      changed_when: true
+
+  roles:
+    - role: xanmanning.k3s

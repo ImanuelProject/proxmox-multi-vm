@@ -30,10 +30,10 @@ Centang item yang relevan sebelum bekerja:
 
 Command bantu:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1
-.\scripts\check-prereqs.ps1 -RequireAnsible
+```bash
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh
+./scripts/check-prereqs.sh -RequireAnsible
 ```
 
 ## Flow Harian Standar
@@ -42,34 +42,34 @@ Command bantu:
 
 Mode GUI:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1
+```bash
+./scripts/start-proxmox-lab.sh
 ```
 
 Mode headless:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1 -Type headless
+```bash
+./scripts/start-proxmox-lab.sh -Type headless
 ```
 
 ### 2. Cek prerequisite lokal
 
 Jika hanya ingin validasi dasar:
 
-```powershell
-.\scripts\check-prereqs.ps1
+```bash
+./scripts/check-prereqs.sh
 ```
 
 Jika juga ingin memastikan Ansible tersedia:
 
-```powershell
-.\scripts\check-prereqs.ps1 -RequireAnsible
+```bash
+./scripts/check-prereqs.sh -RequireAnsible
 ```
 
-Jika token belum diset di sesi PowerShell aktif:
+Jika token belum diset di sesi terminal Bash aktif:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
 ```
 
 ### Mode Host-Only Management
@@ -79,8 +79,8 @@ Jika endpoint Proxmox bridged tidak stabil atau berubah saat pindah Wi-Fi:
 1. matikan VM `Proxmox-Lab`
 2. jalankan:
 
-```powershell
-.\scripts\configure-hostonly-management.ps1
+```bash
+./scripts/configure-hostonly-management.sh
 ```
 
 3. ikuti panduan di [PROXMOX-HOSTONLY-NETWORK.md](/abs/D:\Data Joni\terraform\proxmox-multi-vm\PROXMOX-HOSTONLY-NETWORK.md:1)
@@ -106,20 +106,20 @@ Pilih mode di `terraform/terraform.tfvars` lebih dulu:
 
 Provision Terraform saja:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 Provision + bootstrap:
 
-```powershell
-.\scripts\apply-and-configure.ps1
+```bash
+./scripts/apply-and-configure.sh
 ```
 
 Provision + bootstrap tanpa prompt approval:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -AutoApprove
+```bash
+./scripts/apply-and-configure.sh -AutoApprove
 ```
 
 ### 4. Verifikasi hasil
@@ -134,36 +134,36 @@ Setelah `apply`, periksa:
 
 Command cepat:
 
-```powershell
-Get-Content .\ansible\inventory.ini
+```bash
+cat ./ansible/inventory.ini
 ```
 
 ### 5. Destroy resource Terraform
 
 Mode biasa:
 
-```powershell
-.\scripts\destroy-lab.ps1
+```bash
+./scripts/destroy-lab.sh
 ```
 
 Tanpa prompt approval:
 
-```powershell
-.\scripts\destroy-lab.ps1 -AutoApprove
+```bash
+./scripts/destroy-lab.sh -AutoApprove
 ```
 
 ### 6. Stop lab Proxmox
 
 Shutdown halus:
 
-```powershell
-.\scripts\stop-proxmox-lab.ps1
+```bash
+./scripts/stop-proxmox-lab.sh
 ```
 
 Shutdown paksa:
 
-```powershell
-.\scripts\stop-proxmox-lab.ps1 -Mode poweroff
+```bash
+./scripts/stop-proxmox-lab.sh -Mode poweroff
 ```
 
 ## Skenario Umum
@@ -172,17 +172,17 @@ Shutdown paksa:
 
 Pakai:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 ### Token Proxmox belum diset di terminal baru
 
 Pakai:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh
 ```
 
 ### Ingin menjalankan workload nyata tanpa nested KVM
@@ -197,33 +197,33 @@ container_template_file_id = "local:vztmpl/NAMA_TEMPLATE_ANDA.tar.zst"
 
 Lalu jalankan:
 
-```powershell
-.\scripts\apply-and-configure.ps1
+```bash
+./scripts/apply-and-configure.sh
 ```
 
 ### Ingin mengulang apply tanpa `terraform init`
 
 Pakai:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipTerraformInit
+```bash
+./scripts/apply-and-configure.sh -SkipTerraformInit
 ```
 
 ### Ingin mengulang destroy tanpa `terraform init`
 
 Pakai:
 
-```powershell
-.\scripts\destroy-lab.ps1 -SkipTerraformInit
+```bash
+./scripts/destroy-lab.sh -SkipTerraformInit
 ```
 
 ### Hanya ingin menyalakan atau mematikan VM host Proxmox
 
 Pakai:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1
-.\scripts\stop-proxmox-lab.ps1
+```bash
+./scripts/start-proxmox-lab.sh
+./scripts/stop-proxmox-lab.sh
 ```
 
 ## Verifikasi Hasil
@@ -285,9 +285,9 @@ Itu expected pada laptop ini selama `WSL2/Hyper-V/VBS` tetap aktif. Untuk repo i
 ## Kembali Ke Repo
 
 - `README.md`
-- `scripts/check-prereqs.ps1`
-- `scripts/set-proxmox-token.ps1`
-- `scripts/apply-and-configure.ps1`
-- `scripts/destroy-lab.ps1`
-- `scripts/start-proxmox-lab.ps1`
-- `scripts/stop-proxmox-lab.ps1`
+- `scripts/check-prereqs.sh`
+- `scripts/set-proxmox-token.sh`
+- `scripts/apply-and-configure.sh`
+- `scripts/destroy-lab.sh`
+- `scripts/start-proxmox-lab.sh`
+- `scripts/stop-proxmox-lab.sh`

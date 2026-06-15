@@ -12,3 +12,14 @@ ${name}
 %{ endif ~}
 %{ endfor ~}
 %{ endfor ~}
+
+[k3s_cluster:children]
+k3s_master
+k3s_worker
+
+[k3s_master]
+app-01
+
+[k3s_worker]
+app-02
+web-01

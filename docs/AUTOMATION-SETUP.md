@@ -23,7 +23,7 @@ Urutan besar setup:
 2. pastikan endpoint Proxmox stabil
 3. buat token API Proxmox
 4. siapkan file konfigurasi Terraform
-5. siapkan token untuk sesi PowerShell
+5. siapkan token untuk sesi Bash
 6. cek prerequisite lokal
 7. jalankan provisioning otomatis
 
@@ -37,14 +37,14 @@ Pastikan Anda sudah punya:
 
 Untuk menyalakan VM host Proxmox:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1
+```bash
+./scripts/start-proxmox-lab.sh
 ```
 
 Atau mode headless:
 
-```powershell
-.\scripts\start-proxmox-lab.ps1 -Type headless
+```bash
+./scripts/start-proxmox-lab.sh -Type headless
 ```
 
 ## 2. Pastikan Endpoint Proxmox Stabil
@@ -62,7 +62,7 @@ Sebelum lanjut, pastikan:
 
 Tes sederhana:
 
-```powershell
+```bash
 ping 192.168.56.20
 ```
 
@@ -138,8 +138,8 @@ Repo ini menyediakan contoh file:
 
 Salin menjadi file lokal Anda:
 
-```powershell
-Copy-Item .\terraform\terraform.tfvars.example .\terraform\terraform.tfvars
+```bash
+cp ./terraform/terraform.tfvars.example ./terraform/terraform.tfvars
 ```
 
 Lalu sesuaikan bila perlu.
@@ -205,16 +205,16 @@ vms = {
 }
 ```
 
-## 5. Siapkan Token untuk Sesi PowerShell
+## 5. Siapkan Token untuk Sesi Bash
 
 Repo ini menyediakan helper:
 
-- [scripts/set-proxmox-token.ps1](/abs/D:\infra-lab\proxmox-multi-vm\scripts\set-proxmox-token.ps1:1)
+- [scripts/set-proxmox-token.sh](/abs/D:\infra-lab\proxmox-multi-vm\scripts/set-proxmox-token.sh:1)
 
 Cara paling mudah:
 
-```powershell
-.\scripts\set-proxmox-token.ps1
+```bash
+source ./scripts/set-proxmox-token.sh
 ```
 
 Lalu paste token Anda dalam format:
@@ -225,22 +225,22 @@ root@pam!terraform=SECRET
 
 Atau langsung:
 
-```powershell
-.\scripts\set-proxmox-token.ps1 -TokenValue "root@pam!terraform=SECRET"
+```bash
+source ./scripts/set-proxmox-token.sh -TokenValue "root@pam!terraform=SECRET"
 ```
 
 ## 6. Cek Prerequisite Lokal
 
 Setelah token diset, jalankan:
 
-```powershell
-.\scripts\check-prereqs.ps1
+```bash
+./scripts/check-prereqs.sh
 ```
 
 Kalau nanti ingin melibatkan Ansible juga:
 
-```powershell
-.\scripts\check-prereqs.ps1 -RequireAnsible
+```bash
+./scripts/check-prereqs.sh -RequireAnsible
 ```
 
 Yang dicek script ini:
@@ -258,8 +258,8 @@ Yang dicek script ini:
 
 Untuk laptop ini, mode yang paling stabil:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 Kenapa:
@@ -272,8 +272,8 @@ Kenapa:
 
 Untuk mempercepat:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipTerraformInit -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipTerraformInit -SkipAnsible
 ```
 
 ### Jika Ingin Menjalankan Flow Penuh
@@ -285,16 +285,16 @@ Flow penuh baru masuk akal jika target workload memang bisa dijalankan, misalnya
 
 Saat itu perintahnya:
 
-```powershell
-.\scripts\apply-and-configure.ps1
+```bash
+./scripts/apply-and-configure.sh
 ```
 
 ## 8. Verifikasi Hasil
 
 Sesudah provisioning, cek:
 
-```powershell
-Get-Content .\ansible\inventory.ini
+```bash
+cat ./ansible/inventory.ini
 ```
 
 Untuk mode `API-only`:
@@ -308,40 +308,40 @@ Itu perilaku yang benar.
 
 Untuk destroy:
 
-```powershell
-.\scripts\destroy-lab.ps1
+```bash
+./scripts/destroy-lab.sh
 ```
 
 Atau tanpa prompt:
 
-```powershell
-.\scripts\destroy-lab.ps1 -AutoApprove
+```bash
+./scripts/destroy-lab.sh -AutoApprove
 ```
 
 ## 10. Matikan VM Host Proxmox
 
 Jika sudah selesai:
 
-```powershell
-.\scripts\stop-proxmox-lab.ps1
+```bash
+./scripts/stop-proxmox-lab.sh
 ```
 
 Atau paksa:
 
-```powershell
-.\scripts\stop-proxmox-lab.ps1 -Mode poweroff
+```bash
+./scripts/stop-proxmox-lab.sh -Mode poweroff
 ```
 
 ## Cheat Sheet Harian
 
 Urutan cepat harian:
 
-```powershell
+```bash
 cd "D:\infra-lab\proxmox-multi-vm"
-.\scripts\start-proxmox-lab.ps1 -Type headless
-.\scripts\set-proxmox-token.ps1
-.\scripts\check-prereqs.ps1
-.\scripts\apply-and-configure.ps1 -SkipTerraformInit -SkipAnsible
+./scripts/start-proxmox-lab.sh -Type headless
+source ./scripts/set-proxmox-token.sh
+./scripts/check-prereqs.sh
+./scripts/apply-and-configure.sh -SkipTerraformInit -SkipAnsible
 ```
 
 ## Troubleshooting Cepat
@@ -357,7 +357,7 @@ Penyebab paling umum:
 Solusi:
 
 - buat token baru di Proxmox UI
-- set ulang lewat `set-proxmox-token.ps1`
+- set ulang lewat `set-proxmox-token.sh`
 
 ### `terraform apply` sukses tapi host tidak bisa di-SSH
 
@@ -367,8 +367,8 @@ Kalau `vm_started = false`, itu normal. Repo ini sedang bekerja di mode `API-onl
 
 Gunakan:
 
-```powershell
-.\scripts\apply-and-configure.ps1 -SkipAnsible
+```bash
+./scripts/apply-and-configure.sh -SkipAnsible
 ```
 
 atau siapkan Ansible di WSL.
@@ -386,7 +386,7 @@ Periksa:
 - [README.md](/abs/D:\infra-lab\proxmox-multi-vm\README.md:1)
 - [RUNBOOK.md](/abs/D:\infra-lab\proxmox-multi-vm\RUNBOOK.md:1)
 - [terraform/terraform.tfvars.example](/abs/D:\infra-lab\proxmox-multi-vm\terraform\terraform.tfvars.example:1)
-- [scripts/set-proxmox-token.ps1](/abs/D:\infra-lab\proxmox-multi-vm\scripts\set-proxmox-token.ps1:1)
-- [scripts/check-prereqs.ps1](/abs/D:\infra-lab\proxmox-multi-vm\scripts\check-prereqs.ps1:1)
-- [scripts/apply-and-configure.ps1](/abs/D:\infra-lab\proxmox-multi-vm\scripts\apply-and-configure.ps1:1)
-- [scripts/destroy-lab.ps1](/abs/D:\infra-lab\proxmox-multi-vm\scripts\destroy-lab.ps1:1)
+- [scripts/set-proxmox-token.sh](/abs/D:\infra-lab\proxmox-multi-vm\scripts/set-proxmox-token.sh:1)
+- [scripts/check-prereqs.sh](/abs/D:\infra-lab\proxmox-multi-vm\scripts/check-prereqs.sh:1)
+- [scripts/apply-and-configure.sh](/abs/D:\infra-lab\proxmox-multi-vm\scripts/apply-and-configure.sh:1)
+- [scripts/destroy-lab.sh](/abs/D:\infra-lab\proxmox-multi-vm\scripts/destroy-lab.sh:1)

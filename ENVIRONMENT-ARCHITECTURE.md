@@ -94,9 +94,9 @@ Lapisan logical yang direkomendasikan:
 
 Contoh menjalankan environment tertentu:
 
-```powershell
-Copy-Item terraform\environments\staging.tfvars.example terraform\environments\staging.tfvars
-.\scripts\apply-and-configure.ps1 -SkipAnsible -EnvironmentName staging
+```bash
+cp terraform/environments\staging.tfvars.example terraform/environments\staging.tfvars
+./scripts/apply-and-configure.sh -SkipAnsible -EnvironmentName staging
 ```
 
 ## Catatan Praktis

@@ -39,8 +39,8 @@ observability/
 
 1. Copy file compose:
 
-```powershell
-Copy-Item observability\docker-compose.yml.example observability\docker-compose.yml
+```bash
+cp observability\docker-compose.yml.example observability\docker-compose.yml
 ```
 
 2. Sesuaikan target scrape Prometheus jika perlu.

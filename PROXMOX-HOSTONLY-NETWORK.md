@@ -29,8 +29,8 @@ VM `Proxmox-Lab` sekarang memakai:
 
 Script bantu:
 
-```powershell
-.\scripts\configure-hostonly-management.ps1
+```bash
+./scripts/configure-hostonly-management.sh
 ```
 
 ## Langkah Di Guest Proxmox
@@ -94,7 +94,7 @@ reboot
 
 Setelah guest naik lagi:
 
-```powershell
+```bash
 ping 192.168.56.20
 ```
 

@@ -23,9 +23,9 @@ Status:
 
 Command yang dijalankan:
 
-```powershell
-& "D:\aplikasi\terraform\terraform.exe" init -backend=false
-& "D:\aplikasi\terraform\terraform.exe" validate
+```bash
+terraform init -backend=false
+terraform validate
 ```
 
 Hasil:
@@ -105,8 +105,8 @@ File utama:
 
 Command inti yang dijalankan:
 
-```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" compose -f "D:\Data Joni\terraform\proxmox-multi-vm\observability\docker-compose.yml.example" up -d
+```bash
+docker compose -f ./observability/docker-compose.yml.example up -d
 ```
 
 Container yang berhasil hidup:
