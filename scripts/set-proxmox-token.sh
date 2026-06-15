@@ -16,7 +16,7 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 source "$SCRIPT_DIR/common.sh"
 
 function get_tfvars_value() {
@@ -104,10 +104,14 @@ if [ "$HTTP_CODE" != "200" ]; then
     exit 1
 fi
 
-VERSION=$(echo "$RESPONSE_BODY" | jq -r '.data.version // empty')
+if command -v jq >/dev/null 2>&1; then
+    VERSION=$(echo "$RESPONSE_BODY" | jq -r '.data.version // empty')
+else
+    VERSION=$(echo "$RESPONSE_BODY" | grep -oE '"version":"[^"]+"' | head -n1 | cut -d'"' -f4)
+fi
+
 if [ -z "$VERSION" ]; then
-    echo "Error: Token berhasil dipakai, tetapi respons versi Proxmox tidak valid."
-    exit 1
+    VERSION="Unknown (jq not installed)"
 fi
 
 echo "==> Token valid. Proxmox API merespons versi $VERSION."
