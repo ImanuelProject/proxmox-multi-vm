@@ -58,6 +58,10 @@ function assert_wsl_command() {
     local install_hint="$2"
 
     if [ "$(uname)" = "Linux" ]; then
+        if [ -d "$HOME/.local/bin" ]; then
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+
         if ! command -v "$cmd_name" >/dev/null 2>&1; then
             local msg="Command '$cmd_name' tidak ditemukan."
             if [ -n "$install_hint" ]; then
