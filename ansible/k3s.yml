@@ -48,9 +48,9 @@
       changed_when: "'created' in ns_create.stdout"
 
     - name: Apply ArgoCD manifest
-      ansible.builtin.command: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      ansible.builtin.command: kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
       register: argocd_install
-      changed_when: "'created' in argocd_install.stdout or 'configured' in argocd_install.stdout"
+      changed_when: "'created' in argocd_install.stdout or 'configured' in argocd_install.stdout or 'patched' in argocd_install.stdout"
 
     - name: Change ArgoCD server service type to NodePort
       ansible.builtin.command: kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort","ports":[{"port":443,"nodePort":30200}]}}'
