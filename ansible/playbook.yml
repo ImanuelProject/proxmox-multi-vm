@@ -47,6 +47,7 @@
       ansible.builtin.apt:
         name: default-jre
         state: present
+        dpkg_lock_timeout: 300
 
     - name: Download Apache Kafka archive
       ansible.builtin.get_url:
