@@ -1,0 +1,7 @@
+# Force shell scripts to always use LF line endings
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ini text eol=lf
+*.tf text eol=lf
+*.tfvars text eol=lf
