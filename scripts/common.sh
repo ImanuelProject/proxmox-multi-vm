@@ -57,6 +57,19 @@ function assert_wsl_command() {
     local cmd_name="$1"
     local install_hint="$2"
 
+    if [ "$(uname)" = "Linux" ]; then
+        if ! command -v "$cmd_name" >/dev/null 2>&1; then
+            local msg="Command '$cmd_name' tidak ditemukan."
+            if [ -n "$install_hint" ]; then
+                msg="$msg $install_hint"
+            fi
+            echo "Error: $msg" >&2
+            exit 1
+        fi
+        echo "DIRECT_EXEC"
+        return
+    fi
+
     local wsl_exe
     wsl_exe=$(assert_resolved_command "wsl.exe" "Pastikan WSL2 tersedia di Windows host.")
     
@@ -74,6 +87,12 @@ function assert_wsl_command() {
 
 function convert_windows_path_to_wsl_path() {
     local win_path="$1"
+
+    if [ "$(uname)" = "Linux" ]; then
+        echo "$win_path"
+        return
+    fi
+
     local wsl_exe
     wsl_exe=$(assert_resolved_command "wsl.exe" "Pastikan WSL2 tersedia di Windows host.")
     

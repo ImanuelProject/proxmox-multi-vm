@@ -44,8 +44,13 @@ echo "==> Terraform found at: $TERRAFORM_EXE"
 
 if [ "$REQUIRE_ANSIBLE" -eq 1 ]; then
     WSL_EXE=$(assert_wsl_command "ansible-playbook" "Install Ansible di distro WSL2 atau gunakan flow tanpa Ansible.")
-    echo "==> WSL found at: $WSL_EXE"
-    echo "==> ansible-playbook tersedia di WSL"
+    if [ "$WSL_EXE" = "DIRECT_EXEC" ]; then
+        echo "==> Linux environment detected, running natively"
+        echo "==> ansible-playbook tersedia secara lokal"
+    else
+        echo "==> WSL found at: $WSL_EXE"
+        echo "==> ansible-playbook tersedia di WSL"
+    fi
 fi
 
 if [ "$REQUIRE_INVENTORY" -eq 1 ]; then
