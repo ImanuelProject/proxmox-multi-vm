@@ -34,6 +34,21 @@
       register: tmpfiles_result
       changed_when: true
 
+    - name: Allow all traffic from host-only subnet in UFW
+      community.general.ufw:
+        rule: allow
+        src: 192.168.177.0/24
+
+    - name: Allow all traffic from pod CIDR in UFW
+      community.general.ufw:
+        rule: allow
+        src: 10.42.0.0/16
+
+    - name: Allow all traffic from service CIDR in UFW
+      community.general.ufw:
+        rule: allow
+        src: 10.43.0.0/16
+
   roles:
     - role: xanmanning.k3s
 
