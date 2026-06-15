@@ -36,3 +36,48 @@
 
   roles:
     - role: xanmanning.k3s
+
+- name: Install ArgoCD on Master Node
+  hosts: k3s_master
+  become: true
+  tasks:
+    - name: Create namespace argocd
+      ansible.builtin.command: kubectl create namespace argocd
+      register: ns_create
+      failed_when: false
+      changed_when: "'created' in ns_create.stdout"
+
+    - name: Apply ArgoCD manifest
+      ansible.builtin.command: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      register: argocd_install
+      changed_when: "'created' in argocd_install.stdout or 'configured' in argocd_install.stdout"
+
+    - name: Change ArgoCD server service type to NodePort
+      ansible.builtin.command: kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort","ports":[{"port":443,"nodePort":30200}]}}'
+      register: patch_svc
+      changed_when: "'patched' in patch_svc.stdout"
+
+    - name: Wait for ArgoCD server deployment to be ready
+      ansible.builtin.command: kubectl rollout status deployment/argocd-server -n argocd --timeout=300s
+      changed_when: false
+
+    - name: Get ArgoCD admin password
+      ansible.builtin.shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      register: argocd_password
+      changed_when: false
+
+    - name: Save ArgoCD admin password to master node file
+      ansible.builtin.copy:
+        content: "{{ argocd_password.stdout }}"
+        dest: /root/argocd-admin-password.txt
+        mode: '0600'
+
+    - name: Save ArgoCD admin password to local repo file
+      ansible.builtin.copy:
+        content: "{{ argocd_password.stdout }}\n"
+        dest: /mnt/d/Data Joni/terraform/proxmox-multi-vm/ansible/argocd-admin-password.txt
+        mode: '0644'
+      delegate_to: localhost
+      become: false
+      ignore_errors: true
+

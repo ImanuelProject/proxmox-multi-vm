@@ -98,7 +98,7 @@ ANSIBLE_DIR_WSL=$(convert_windows_path_to_wsl_path "$ANSIBLE_DIR")
 INVENTORY_PATH_WSL=$(convert_windows_path_to_wsl_path "$INVENTORY_PATH")
 PLAYBOOK_PATH_WSL=$(convert_windows_path_to_wsl_path "$PLAYBOOK_PATH")
 
-BASH_COMMAND="cd $(quote_bash_literal "$ANSIBLE_DIR_WSL") && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i $(quote_bash_literal "$INVENTORY_PATH_WSL") $(quote_bash_literal "$PLAYBOOK_PATH_WSL")"
+BASH_COMMAND="cd $(quote_bash_literal "$ANSIBLE_DIR_WSL") && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i $(quote_bash_literal "$INVENTORY_PATH_WSL") $(quote_bash_literal "$PLAYBOOK_PATH_WSL") --vault-password-file ~/.vault_pass"
 
 echo "==> Running ansible-playbook via WSL"
 "$WSL_EXE" sh -lc "$BASH_COMMAND"
